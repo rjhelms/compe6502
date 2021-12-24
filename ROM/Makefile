@@ -27,6 +27,7 @@ $(TARGET): $(OBJECTS) $(BIN)
 	$(LD) -C $(CONFIG) -Ln $(BIN)/$(PROJECT).lbl -m $(BIN)/$(PROJECT).map -o $(TARGET) $(OBJECTS) $(LIB)
 
 $(OBJ)/%.o: $(SRC)/%.s $(OBJ)
+	git rev-parse --short==2 HEAD | cat $(SRC)/rom_ver_stub.inc - > $(SRC)/rom_ver.inc
 	${CA} -v -o $@ $<
 
 $(OBJ):

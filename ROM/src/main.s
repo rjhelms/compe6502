@@ -1,8 +1,11 @@
 .debuginfo + 
 
 .PC02
-ROM_VER = $00
-CHK_BYTE = ROM_VER ^ $A5
+
+.include "rom_ver.inc"
+
+CHK_BYTE = <ROM_VER ^ >ROM_VER
+.out .string(<CHK_BYTE)
 
 .include "slot_defs.inc"
 .include "io_card.s"
@@ -87,6 +90,15 @@ VECT_SET:
         cpy #VEC_TAB_LEN
         bne VECT_SET
 
+        lda #<MSG_MEM_ROM_VER
+        sta MSGL
+        lda #>MSG_MEM_ROM_VER
+        sta MSGH
+        jsr SHWMSG
+
+        lda PWR_UP      ; display magic byte
+        jsr PRBYTE
+
         jmp MON_COLDRESET
 .endproc
 
@@ -145,7 +157,8 @@ DO_BRK:                 ; else, call BRK soft vector
 .segment "RODATA"
 MSG_VRAM_OK:    .byte "VRAM OK", $0D, $00
 MSG_MEM_TEST:   .byte "RAM TEST ", $00
-
+MSG_MEM_ROM_VER:
+                .byte "ROM CHECKSUM ", $00
 VEC_DATA:
         .addr BRK_DEFAULT       ; NMIVEC0
         .addr BRK_DEFAULT       ; BRKVEC0

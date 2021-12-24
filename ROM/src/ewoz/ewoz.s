@@ -338,6 +338,7 @@ SHWMSG:
 
 .SEGMENT "RODATA"
 MSG_MON_WELCOME:
+        .byte $0D
         .byte "+-----------+", $0D
         .byte "| Compe6502 |", $0D
         .byte "+-----------+", $0D, $0D, $00
