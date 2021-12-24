@@ -1,0 +1,260 @@
+EESchema Schematic File Version 4
+EELAYER 30 0
+EELAYER END
+$Descr A 11000 8500
+encoding utf-8
+Sheet 4 4
+Title "VIA I/O Card - Keyboard MCU"
+Date "2021-12-19"
+Rev "1"
+Comp "rjh"
+Comment1 "CC-BY-SA 4.0"
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+Text HLabel 4100 3950 0    50   Input ~ 0
+~RES
+Text HLabel 5500 4250 2    50   BiDi ~ 0
+CA1
+Text HLabel 5500 4350 2    50   BiDi ~ 0
+CA2
+Wire Wire Line
+	5400 4250 5500 4250
+Wire Wire Line
+	5500 4350 5400 4350
+Text HLabel 4100 4550 0    50   BiDi ~ 0
+KBDATA
+Text HLabel 4100 4450 0    50   BiDi ~ 0
+KBCLOCK
+Wire Wire Line
+	4100 4450 4200 4450
+Wire Wire Line
+	4200 4550 4100 4550
+$Comp
+L Connector_Generic:Conn_02x03_Odd_Even J5
+U 1 1 61ABC67B
+P 7150 3150
+F 0 "J5" H 7200 3467 50  0000 C CNN
+F 1 "Conn_02x03_Odd_Even" H 7200 3376 50  0000 C CNN
+F 2 "Connector_IDC:IDC-Header_2x03_P2.54mm_Vertical" H 7150 3150 50  0001 C CNN
+F 3 "~" H 7150 3150 50  0001 C CNN
+F 4 "54020-44030LF" H 7150 3150 50  0001 C CNN "MPN"
+F 5 "Amphenol FCI" H 7150 3150 50  0001 C CNN "Manufacturer"
+	1    7150 3150
+	1    0    0    -1  
+$EndComp
+Text Label 6900 3050 2    50   ~ 0
+UPDI
+Wire Wire Line
+	6900 3050 6950 3050
+Text Label 7500 3050 0    50   ~ 0
++5V
+Wire Wire Line
+	7450 3050 7500 3050
+$Comp
+L Device:C_Small C?
+U 1 1 61DBCEEE
+P 7150 4100
+AR Path="/61A54C0B/61DBCEEE" Ref="C?"  Part="1" 
+AR Path="/61AADDA6/61DBCEEE" Ref="C19"  Part="1" 
+F 0 "C19" H 7265 4146 50  0000 L CNN
+F 1 "100n" H 7265 4055 50  0000 L CNN
+F 2 "Capacitor_SMD:C_0805_2012Metric" H 7188 3950 50  0001 C CNN
+F 3 "~" H 7150 4100 50  0001 C CNN
+F 4 "08055C104JAT2A" H 7150 4100 50  0001 C CNN "MPN"
+F 5 "AVX" H 7150 4100 50  0001 C CNN "Manufacturer"
+	1    7150 4100
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:+5V #PWR037
+U 1 1 61DBEC5D
+P 7150 3900
+F 0 "#PWR037" H 7150 3750 50  0001 C CNN
+F 1 "+5V" H 7165 4073 50  0000 C CNN
+F 2 "" H 7150 3900 50  0001 C CNN
+F 3 "" H 7150 3900 50  0001 C CNN
+	1    7150 3900
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR038
+U 1 1 61DBF3B1
+P 7150 4300
+F 0 "#PWR038" H 7150 4050 50  0001 C CNN
+F 1 "GND" H 7155 4127 50  0000 C CNN
+F 2 "" H 7150 4300 50  0001 C CNN
+F 3 "" H 7150 4300 50  0001 C CNN
+	1    7150 4300
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	7150 3900 7150 3950
+Wire Wire Line
+	7150 4200 7150 4250
+Wire Wire Line
+	4200 3950 4100 3950
+Text Label 4100 4250 2    50   ~ 0
+MCU_TX
+Text Label 4100 4350 2    50   ~ 0
+MCU_RX
+Text HLabel 4100 4650 0    50   Input ~ 0
+REPT
+Wire Wire Line
+	4100 4650 4200 4650
+NoConn ~ 5400 4450
+NoConn ~ 5400 4550
+Wire Wire Line
+	4800 2900 4800 2950
+Connection ~ 4800 2900
+Wire Wire Line
+	4900 2900 4900 2950
+Wire Wire Line
+	4800 2900 4900 2900
+Wire Wire Line
+	4800 2850 4800 2900
+$Comp
+L power:+5V #PWR034
+U 1 1 61AC7716
+P 4800 2850
+F 0 "#PWR034" H 4800 2700 50  0001 C CNN
+F 1 "+5V" H 4815 3023 50  0000 C CNN
+F 2 "" H 4800 2850 50  0001 C CNN
+F 3 "" H 4800 2850 50  0001 C CNN
+	1    4800 2850
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4100 4250 4200 4250
+Wire Wire Line
+	4100 4350 4200 4350
+Text Label 4100 3150 2    50   ~ 0
+UPDI
+Wire Wire Line
+	4100 3150 4200 3150
+Text Label 7500 3150 0    50   ~ 0
+MCU_RX
+Wire Wire Line
+	7450 3150 7500 3150
+Text Label 6900 3250 2    50   ~ 0
+MCU_TX
+Wire Wire Line
+	6900 3250 6950 3250
+Text Label 7500 3250 0    50   ~ 0
+GND
+Wire Wire Line
+	7450 3250 7500 3250
+$Comp
+L Device:C_Small C?
+U 1 1 61C082DB
+P 7550 4100
+AR Path="/61A54C0B/61C082DB" Ref="C?"  Part="1" 
+AR Path="/61AADDA6/61C082DB" Ref="C22"  Part="1" 
+F 0 "C22" H 7665 4146 50  0000 L CNN
+F 1 "100n" H 7665 4055 50  0000 L CNN
+F 2 "Capacitor_SMD:C_0805_2012Metric" H 7588 3950 50  0001 C CNN
+F 3 "~" H 7550 4100 50  0001 C CNN
+F 4 "08055C104JAT2A" H 7550 4100 50  0001 C CNN "MPN"
+F 5 "AVX" H 7550 4100 50  0001 C CNN "Manufacturer"
+	1    7550 4100
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	7150 3950 7550 3950
+Wire Wire Line
+	7550 3950 7550 4000
+Connection ~ 7150 3950
+Wire Wire Line
+	7150 3950 7150 4000
+Wire Wire Line
+	7150 4250 7550 4250
+Wire Wire Line
+	7550 4250 7550 4200
+Connection ~ 7150 4250
+Wire Wire Line
+	7150 4250 7150 4300
+NoConn ~ 4200 3350
+NoConn ~ 4200 3450
+NoConn ~ 6950 3150
+$Comp
+L MCU_Microchip_ATmega:ATmega4808-X U10
+U 1 1 61BF7AA2
+P 4800 4050
+F 0 "U10" H 4800 2861 50  0000 C CNN
+F 1 "ATmega4808-X" H 4800 2770 50  0000 C CNN
+F 2 "Package_SO:SSOP-28_5.3x10.2mm_P0.65mm" H 4800 4050 50  0001 C CIN
+F 3 "http://ww1.microchip.com/downloads/en/DeviceDoc/40002018A.pdf" H 4800 4050 50  0001 C CNN
+F 4 "ATMEGA4808-XUR" H 4800 4050 50  0001 C CNN "MPN"
+F 5 "Microchip" H 4800 4050 50  0001 C CNN "Manufacturer"
+	1    4800 4050
+	1    0    0    -1  
+$EndComp
+Text HLabel 5900 4200 2    50   Output ~ 0
+KBD[0..7]
+Wire Bus Line
+	5800 4200 5900 4200
+Wire Wire Line
+	5400 4050 5700 4050
+Wire Wire Line
+	5400 3950 5700 3950
+Wire Wire Line
+	5400 3850 5700 3850
+Wire Wire Line
+	5400 3750 5700 3750
+Wire Wire Line
+	5400 3650 5700 3650
+Wire Wire Line
+	5400 3550 5700 3550
+Wire Wire Line
+	5400 3450 5700 3450
+Wire Wire Line
+	5400 3350 5700 3350
+Entry Wire Line
+	5700 3350 5800 3250
+Entry Wire Line
+	5700 3450 5800 3350
+Entry Wire Line
+	5700 3550 5800 3450
+Entry Wire Line
+	5700 3650 5800 3550
+Entry Wire Line
+	5700 3750 5800 3650
+Entry Wire Line
+	5700 3850 5800 3750
+Entry Wire Line
+	5700 3950 5800 3850
+Entry Wire Line
+	5700 4050 5800 3950
+Text Label 5450 4050 0    50   ~ 0
+KBD7
+Text Label 5450 3950 0    50   ~ 0
+KBD6
+Text Label 5450 3850 0    50   ~ 0
+KBD5
+Text Label 5450 3750 0    50   ~ 0
+KBD4
+Text Label 5450 3650 0    50   ~ 0
+KBD3
+Text Label 5450 3550 0    50   ~ 0
+KBD2
+Text Label 5450 3450 0    50   ~ 0
+KBD1
+Text Label 5450 3350 0    50   ~ 0
+KBD0
+$Comp
+L power:GND #PWR0104
+U 1 1 61C1570D
+P 4800 5200
+F 0 "#PWR0104" H 4800 4950 50  0001 C CNN
+F 1 "GND" H 4805 5027 50  0000 C CNN
+F 2 "" H 4800 5200 50  0001 C CNN
+F 3 "" H 4800 5200 50  0001 C CNN
+	1    4800 5200
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4800 5150 4800 5200
+Wire Bus Line
+	5800 3250 5800 4200
+$EndSCHEMATC

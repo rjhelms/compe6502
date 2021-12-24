@@ -7,6 +7,8 @@
 *.bck
 *.kicad_pcb-bak
 *~
+*.sch-bak
+
 _autosave-*
 *.tmp
 *-rescue.lib
@@ -23,6 +25,8 @@ _autosave-*
 # Exported BOM files
 *.xml
 *.csv
+
+gerbs
 
 bin
 obj
