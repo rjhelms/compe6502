@@ -26,16 +26,6 @@ COUNTER:    .res 1
 CRC:        .res 1
 CRCCHECK:   .res 1
 
-; additional pointers for processor registers etc
-
-AREG:   .res 1
-XREG:   .res 1
-YREG:   .res 1
-PREG:   .res 1
-SREG:   .res 1
-PCL:    .res 1
-PCH:    .res 1
-
 .segment "MON"
 MON_COLDRESET:
         LDA #<MSG_MON_WELCOME
@@ -335,10 +325,6 @@ DONESECOND:
         ORA L
         INY
         RTS
-
-.SEGMENT "BIOS"
-
-; put SHWMSG in BIOS to make monitor fit in 2 pages
 
 SHWMSG:
         LDY #$0

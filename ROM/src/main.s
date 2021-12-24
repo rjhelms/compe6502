@@ -10,6 +10,9 @@ CHK_BYTE = ROM_VER ^ $A5
 .include "memtest.s"
 .include "vectors.s"
 
+.include "ewoz/ewoz.s"
+.include "ewoz_ext.s"
+
 .segment "CODE"
 RESERVE:
         rts
@@ -135,18 +138,9 @@ DO_BRK:                 ; else, call BRK soft vector
         stx PCL         ; and store on zero page
         ply
         sty PCH
-        lda #$0D
-        jsr COUT
-        jsr BEEP
-        ldy #$07        ; output in reverse order
-:       lda AREG, Y
-        jsr PRBYTE
-        dey
-        bne :-
+        jsr PRSTATUS
         jmp (BRKRET0)   ; jump to return vector
 .endproc
-
-.include "ewoz/ewoz.s"
 
 .segment "RODATA"
 MSG_VRAM_OK:    .byte "VRAM OK", $0D, $00
