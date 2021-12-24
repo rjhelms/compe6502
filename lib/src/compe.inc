@@ -1,0 +1,73 @@
+; zero page addresses
+
+SCREEN_PTR      = $00
+SCROLL_PTR      = $02
+XAML	        = $04
+XAMH	        = $05
+STL	        = $06
+STH	        = $07
+L	        = $08
+H	        = $09
+YSAV	        = $0A
+MODE	        = $0B
+MSGL	        = $0C
+MSGH	        = $0D
+COUNTER	        = $0E
+CRC	        = $0F
+CRCCHECK	= $10
+
+SLOT_START = $8000
+SLOT_SIZE  = $0800
+
+SLOT0 = SLOT_START
+SLOT1 = SLOT0 + SLOT_SIZE
+SLOT2 = SLOT1 + SLOT_SIZE
+SLOT3 = SLOT2 + SLOT_SIZE
+SLOT4 = SLOT3 + SLOT_SIZE
+SLOT5 = SLOT4 + SLOT_SIZE
+SLOT6 = SLOT5 + SLOT_SIZE
+SLOT7 = SLOT6 + SLOT_SIZE
+
+; I/O addresses
+
+IO_VIA_START    = SLOT0
+IO_VIA_PORTB    = IO_VIA_START + $00
+IO_VIA_PORTA    = IO_VIA_START + $01
+IO_VIA_DDRB     = IO_VIA_START + $02
+IO_VIA_DDRA     = IO_VIA_START + $03
+IO_VIA_T1CL     = IO_VIA_START + $04
+IO_VIA_T1CH     = IO_VIA_START + $05
+IO_VIA_T1LL     = IO_VIA_START + $06
+IO_VIA_T1LH     = IO_VIA_START + $07
+IO_VIA_T2CL     = IO_VIA_START + $08
+IO_VIA_T2CH     = IO_VIA_START + $09
+IO_VIA_SR       = IO_VIA_START + $0A
+IO_VIA_ACR      = IO_VIA_START + $0B
+IO_VIA_PCR      = IO_VIA_START + $0C
+IO_VIA_IFR      = IO_VIA_START + $0D
+IO_VIA_IER      = IO_VIA_START + $0E
+IO_VIA_PORTA_NH = IO_VIA_START + $0F
+
+VRAM_START      = SLOT6
+VRAM_END        = SLOT6 + $400
+SCREEN_END      = SLOT6 + $300
+
+; ROM routines
+
+M_COLDRESET     = $FF00
+M_WARMRESET	= $FF03
+M_PRBYTE	= $FF06
+
+; reserved bytes here
+
+B_BEEP	        = $FF3F
+B_KEY_READ	= $FF42
+B_KEY_GET	= $FF45
+B_IO_INIT	= $FF48
+B_VRAM_CLEAR_FULL       = $FF4B
+B_VRAM_CLEAR	= $FF4E
+B_COUT_NO_CC	= $FF51
+B_COUT	        = $FF54
+B_CHECK_SCROLL	= $FF57
+B_SCROLL	= $FF5A
+B_COLDSTART	= $FF5D
