@@ -12,8 +12,8 @@
   (page A4)
   (title_block
     (title "Compe 6502 Prototyping Backplane")
-    (date 2021-12-06)
-    (rev 1)
+    (date 2021-12-24)
+    (rev 2)
     (company rjh)
     (comment 1 "CC-BY-SA 4.0")
   )
@@ -2317,7 +2317,7 @@
     )
   )
 
-  (gr_text "Rev 1\n20211206 rjh" (at 184.15 138.43) (layer B.SilkS) (tstamp 61AEFFDC)
+  (gr_text "Rev 2\n20211224 rjh" (at 184.15 138.43) (layer B.SilkS) (tstamp 61AEFFDC)
     (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
   )
   (gr_text "6502 BACKPLANE\n" (at 184.15 135.89) (layer B.SilkS) (tstamp 61AEFFD6)
@@ -2326,7 +2326,7 @@
   (gr_text "6502 BACKPLANE\n" (at 184.15 135.89) (layer F.SilkS)
     (effects (font (size 1.5 1.5) (thickness 0.25)))
   )
-  (gr_text "Rev 1\n20211206 rjh" (at 184.15 138.43) (layer F.SilkS)
+  (gr_text "Rev 2\n20211224 rjh" (at 184.15 138.43) (layer F.SilkS)
     (effects (font (size 1 1) (thickness 0.15)))
   )
   (gr_text 3 (at 193.04 124.46) (layer F.SilkS) (tstamp 61B0808C)
