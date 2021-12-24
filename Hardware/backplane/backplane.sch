@@ -216,9 +216,9 @@ F 5 "Texas Instruments" H 9100 1650 50  0001 C CNN "Manufacturer"
 $EndComp
 Text Label 8550 1850 2    50   ~ 0
 A15
-Text Label 8550 1450 2    50   ~ 0
+Text Label 8550 1550 2    50   ~ 0
 A13
-Text Label 8550 1350 2    50   ~ 0
+Text Label 8550 1450 2    50   ~ 0
 A12
 Wire Wire Line
 	8550 1350 8600 1350
@@ -1728,9 +1728,8 @@ Wire Wire Line
 	9000 4750 9100 4750
 Wire Wire Line
 	8650 4350 9100 4350
-Text Label 8550 1550 2    50   ~ 0
+Text Label 8550 1950 2    50   ~ 0
 A14
-Connection ~ 8550 2050
-Wire Wire Line
-	8550 1950 8550 2050
+Text Label 8550 1350 2    50   ~ 0
+A11
 $EndSCHEMATC
