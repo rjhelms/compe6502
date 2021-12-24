@@ -5,8 +5,7 @@
 ; via https://gist.github.com/BigEd/2760560
 
 ; adapted to ca65 and Compe6502 by Rob Hailman 2021
-
-; TODO: figure out the shenanigans about the high byte - do I need any of this?
+; removed high-bit logic from Apple 1
 
 .segment "BSS"
 IN:         .res 256    ;*Input buffer
@@ -34,27 +33,27 @@ MON_COLDRESET:
         STA MSGH
         JSR SHWMSG      ;* Show Welcome.
 MON_WARMRESET: 
-        LDA #$9B        ;* Auto escape.
+        LDA #$1B        ;* Auto escape.
 NOTCR:  
-        CMP #$88        ;"<-"? * Note this was chaged to $88 which is the back space key.
+        CMP #$18        ;"<-"? * Note this was chaged to $88 which is the back space key.
         BEQ BACKSPACE   ;Yes.
-        CMP #$9B        ;ESC?
+        CMP #$1B        ;ESC?
         BEQ ESCAPE      ;Yes.
         INY             ;Advance text index.
         BPL NEXTCHAR    ;Auto ESC if >127.
 ESCAPE: 
-        LDA #$DC        ;"\"
+        LDA #$5C        ;"\"
         JSR ECHO        ;Output it.
 GETLINE:
-        LDA #$8D        ;CR.
+        LDA #$0D        ;CR.
         JSR ECHO        ;Output it.
         LDY #$01        ;Initiallize text index.
 BACKSPACE: 
         DEY             ;Backup text index.
         BMI GETLINE     ;Beyond start of line, reinitialize.
-        LDA #$A0        ;*Space, overwrite the backspaced char.
+        LDA #$20        ;*Space, overwrite the backspaced char.
         JSR ECHO
-        LDA #$88        ;*Backspace again to get to correct pos.
+        LDA #$08        ;*Backspace again to get to correct pos.
         JSR ECHO
 NEXTCHAR:
         LDA #$B1        ; rjh - NEXTCHAR adapted for VIA input    
@@ -65,10 +64,9 @@ NEXTCHAR:
         BMI CONVERT     ;*Nope, just convert it
         AND #$5F        ;*If lower case, convert to Upper case
 CONVERT:    
-        ORA #$80        ;*Convert it to "ASCII Keyboard" Input
         STA IN,Y        ;Add to text buffer.
         JSR ECHO        ;Display character.
-        CMP #$8D        ;CR?
+        CMP #$0D        ;CR?
         BNE NOTCR       ;No.
         LDY #$FF        ;Reset text index.
         LDA #$00        ;For XAM mode.
@@ -81,23 +79,23 @@ BLSKIP:
         INY             ;Advance text index.
 NEXTITEM:
         LDA IN,Y        ;Get character.
-        CMP #$8D        ;CR?
+        CMP #$0D        ;CR?
         BEQ GETLINE     ;Yes, done this line.
-        CMP #$AE        ;"."?
+        CMP #$2E        ;"."?
         BCC BLSKIP      ;Skip delimiter.
         BEQ SETMODE     ;Set BLOCK XAM mode.
-        CMP #$BA        ;":"?
+        CMP #$3A        ;":"?
         BEQ SETSTOR     ;Yes, set STOR mode.
-        CMP #$D2        ;"R"?
+        CMP #$52        ;"R"?
         BEQ RUN         ;Yes, run user program.
-        CMP #$CC        ;* "L"?
+        CMP #$4C        ;* "L"?
         BEQ LOADINT     ;* Yes, Load Intel Code.
         STX L           ;$00->L.
         STX H           ; and H.
         STY YSAV        ;Save Y for comparison.
 NEXTHEX:    
         LDA IN,Y        ;Get character for hex test.
-        EOR #$B0        ;Map digits to $0-9.
+        EOR #$30        ;Map digits to $0-9.
         CMP #$0A        ;Digit?
         BCC DIG         ;Yes.
         ADC #$88        ;Map letter "A"-"F" to $FA-FF.
@@ -153,16 +151,16 @@ SETADR:
         BNE SETADR      ;Loop unless X = 0.
 NXTPRNT:
         BNE PRDATA      ;NE means no address to print.
-        LDA #$8D        ;CR.
+        LDA #$0D        ;CR.
         JSR ECHO        ;Output it.
         LDA XAMH        ;'Examine index' high-order byte.
         JSR PRBYTE      ;Output it in hex format.
         LDA XAML        ;Low-order "examine index" byte.
         JSR PRBYTE      ;Output it in hex format.
-        LDA #$BA        ;":".
+        LDA #$3A        ;":".
         JSR ECHO        ;Output it.
 PRDATA:
-        LDA #$A0        ;Blank.
+        LDA #$20        ;Blank.
         JSR ECHO        ;Output it.
         LDA (XAML,X)    ;Get data byte at 'examine index".
         JSR PRBYTE      ;Output it in hex format.
@@ -190,13 +188,12 @@ PRBYTE:
         PLA             ;Restore A.
 PRHEX:
         AND #$0F        ;Mask LSD for hex print.
-        ORA #$B0        ;Add "0".
-        CMP #$BA        ;Digit?
+        ORA #$30        ;Add "0".
+        CMP #$3A        ;Digit?
         BCC ECHO        ;Yes, output it.
         ADC #$06        ;Add offset for letter.
 ECHO:
         PHA             ;*Save A
-        AND #$7F        ;*Change to "standard ASCII"
         JSR COUT        ; rjh - ECHO calls video method
         PLA             ;*Restore A
         RTS             ;*Done, over and out...
@@ -341,11 +338,8 @@ SHWMSG:
 
 
 .SEGMENT "RODATA"
+
 MSG_MON_WELCOME:
-        .byte "+-----------+", $0D
-        .byte "| Compe6502 |", $0D
-        .byte "+-----------+", $0D, $0D, $00
-MSG_MON_WELCOME_FANCY:
         .byte $C9, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $BB, $0D
         .byte $BA, " Comp", $82, "6502 ", $BA, $0D
         .byte $C8, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $BC, $0D, $0D, 0
