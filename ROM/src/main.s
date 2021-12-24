@@ -33,7 +33,7 @@ B_Reserve16:            jmp     RESERVE
 B_Reserve17:            jmp     RESERVE
 B_Reserve18:            jmp     RESERVE
 B_Reserve19:            jmp     RESERVE
-B_Reserve20:            jmp     RESERVE
+B_SHOWMSG:              jmp     SHWMSG
 B_BEEP:                 jmp     BEEP
 B_KEY_READ:             jmp     KEY_READ
 B_KEY_GET:              jmp     KEY_GET
