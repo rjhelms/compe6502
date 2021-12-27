@@ -36,7 +36,8 @@ MON_COLDRESET:
 MON_WARMRESET: 
         LDA #$9B        ;* Auto escape.
 NOTCR:  
-        CMP #$88        ;"<-"? * Note this was chaged to $88 which is the back space key.
+        CMP #$88        ;"<-"? * Note this was chaged to $88 which is the back
+                        ;        space key.
         BEQ BACKSPACE   ;Yes.
         CMP #$9B        ;ESC?
         BEQ ESCAPE      ;Yes.
@@ -178,7 +179,8 @@ XAMNEXT:
         INC XAMH
 MOD8CHK:
         LDA XAML        ;Check low-order 'exainine index' byte
-        AND #$07        ;For MOD 8=0 ** changed to $0F to get 16 values per row ** -- rjh: changed back to 8 values per row
+        AND #$07        ;For MOD 8=0 ** changed to $0F to get 16 values per row
+                        ;            ** rjh: changed back to 8 values per row
         BPL NXTPRNT     ;Always taken.
 PRBYTE:
         PHA             ;Save A for LSD.
@@ -330,7 +332,8 @@ SHWMSG:
         LDY #$0
 @PRINT: LDA (MSGL),Y
         BEQ @DONE
-        JSR ECHO
+        JSR COUT        ; rjh: use COUT instead of ECHO to avoid high-bit
+                        ;      shenanigans, as none of the messages have that!
         INY 
         BNE @PRINT
 @DONE:  RTS 
@@ -339,10 +342,6 @@ SHWMSG:
 .SEGMENT "RODATA"
 MSG_MON_WELCOME:
         .byte $0D
-        .byte "+-----------+", $0D
-        .byte "| Compe6502 |", $0D
-        .byte "+-----------+", $0D, $0D, $00
-MSG_MON_WELCOME_FANCY:
         .byte $C9, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $BB, $0D
         .byte $BA, " Comp", $82, "6502 ", $BA, $0D
         .byte $C8, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $BC, $0D, $0D, 0
