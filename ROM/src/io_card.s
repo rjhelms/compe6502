@@ -18,14 +18,16 @@
 .export IO_VIA_IER      = IO_VIA_START + $0E
 .export IO_VIA_PORTA_NH = IO_VIA_START + $0F
 
-IO_MASK_SD_MISO      = %00000001
-IO_MASK_SD_MOSI      = %00000010
-IO_MASK_SD_SCK       = %00000100
-IO_MASK_SD_CS        = %00001000
-IO_MASK_KBD_REPT     = %00010000
-IO_MASK_SPKR         = %00100000
-IO_MASK_CAS_TX       = %01000000
-IO_MASK_CAS_RX       = %10000000
+IO_MASK_SD_MISO         = %00000001
+IO_MASK_SD_MOSI         = %00000010
+IO_MASK_SD_SCK          = %00000100
+IO_MASK_SD_CS           = %00001000
+IO_MASK_KBD_REPT        = %00010000
+IO_MASK_SPKR            = %00100000
+IO_MASK_CAS_TX          = %01000000
+IO_MASK_CAS_RX          = %10000000
+
+IO_PCR_CA2_HANDSHAKE    = %00001000
 
 .segment "CODE"
 
@@ -35,7 +37,7 @@ IO_MASK_CAS_RX       = %10000000
         ; initialize port A
         lda #$00        
         sta IO_VIA_DDRA
-        lda #%00001010
+        lda #IO_PCR_CA2_HANDSHAKE
         sta IO_VIA_PCR
 
         ; initialize port B
