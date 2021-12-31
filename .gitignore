@@ -28,6 +28,15 @@ _autosave-*
 
 gerbs
 
+# KiCad 6 bits
+*-backups
+\#auto_saved_files\#
+
+# cc65 build files
+
 bin
 obj
 tmp
+
+# folder for locak mucking around
+local
