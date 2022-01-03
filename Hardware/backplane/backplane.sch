@@ -5,8 +5,8 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 1
 Title "Compe 6502 Prototyping Backplane"
-Date "2021-12-06"
-Rev "1"
+Date "2021-12-24"
+Rev "2"
 Comp "rjh"
 Comment1 "CC-BY-SA 4.0"
 Comment2 ""
@@ -217,10 +217,8 @@ $EndComp
 Text Label 8550 1850 2    50   ~ 0
 A15
 Text Label 8550 1550 2    50   ~ 0
-A14
-Text Label 8550 1450 2    50   ~ 0
 A13
-Text Label 8550 1350 2    50   ~ 0
+Text Label 8550 1450 2    50   ~ 0
 A12
 Wire Wire Line
 	8550 1350 8600 1350
@@ -244,10 +242,7 @@ $EndComp
 Wire Wire Line
 	8600 1950 8550 1950
 Wire Wire Line
-	8550 1950 8550 2050
-Wire Wire Line
 	8550 2050 8600 2050
-Connection ~ 8550 2050
 Wire Wire Line
 	8550 2050 8550 2100
 $Comp
@@ -1571,14 +1566,14 @@ $EndComp
 $Comp
 L Device:R_Small R3
 U 1 1 625A4393
-P 8900 4350
-F 0 "R3" V 8704 4350 50  0000 C CNN
-F 1 "3K3" V 8795 4350 50  0000 C CNN
-F 2 "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal" H 8900 4350 50  0001 C CNN
-F 3 "~" H 8900 4350 50  0001 C CNN
-F 4 "CF14JT3K30" H 8900 4350 50  0001 C CNN "MPN"
-F 5 "Stackpole" H 8900 4350 50  0001 C CNN "Manufacturer"
-	1    8900 4350
+P 8900 4750
+F 0 "R3" V 9004 4750 50  0000 C CNN
+F 1 "3K3" V 9095 4750 50  0000 C CNN
+F 2 "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal" H 8900 4750 50  0001 C CNN
+F 3 "~" H 8900 4750 50  0001 C CNN
+F 4 "CF14JT3K30" H 8900 4750 50  0001 C CNN "MPN"
+F 5 "Stackpole" H 8900 4750 50  0001 C CNN "Manufacturer"
+	1    8900 4750
 	0    1    1    0   
 $EndComp
 $Comp
@@ -1728,9 +1723,13 @@ Wire Wire Line
 Wire Wire Line
 	3550 6600 3450 6600
 Wire Wire Line
-	8650 4350 8800 4350
+	8650 4750 8800 4750
 Wire Wire Line
-	9000 4350 9100 4350
+	9000 4750 9100 4750
 Wire Wire Line
-	8650 4750 9100 4750
+	8650 4350 9100 4350
+Text Label 8550 1950 2    50   ~ 0
+A14
+Text Label 8550 1350 2    50   ~ 0
+A11
 $EndSCHEMATC

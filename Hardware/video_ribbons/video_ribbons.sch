@@ -5,8 +5,8 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 5
 Title "74 Character Generator (Ribbon cable)"
-Date "2021-07-29"
-Rev "1"
+Date "2021-12-24"
+Rev "2"
 Comp "rjh"
 Comment1 "CC-BY-SA 4.0"
 Comment2 ""
@@ -249,7 +249,7 @@ Wire Wire Line
 	7600 4400 7200 4400
 Wire Wire Line
 	7200 4400 7200 5700
-Text Label 7450 4300 2    50   ~ 0
+Text Label 7500 4300 2    50   ~ 0
 7M
 $Sheet
 S 3750 4900 900  1100
@@ -274,25 +274,18 @@ $EndSheet
 $Comp
 L power:GND #PWR016
 U 1 1 6126EBB8
-P 7500 4700
-F 0 "#PWR016" H 7500 4450 50  0001 C CNN
-F 1 "GND" H 7505 4527 50  0000 C CNN
-F 2 "" H 7500 4700 50  0001 C CNN
-F 3 "" H 7500 4700 50  0001 C CNN
-	1    7500 4700
+P 7350 3050
+F 0 "#PWR016" H 7350 2800 50  0001 C CNN
+F 1 "GND" H 7272 3013 50  0000 R CNN
+F 2 "" H 7350 3050 50  0001 C CNN
+F 3 "" H 7350 3050 50  0001 C CNN
+	1    7350 3050
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	7600 4600 7500 4600
-Wire Wire Line
-	7500 4600 7500 4700
-Wire Wire Line
-	7500 4600 7500 3200
-Wire Wire Line
 	7500 3200 7600 3200
-Connection ~ 7500 4600
 Wire Wire Line
-	7450 4300 7600 4300
+	7500 4300 7600 4300
 $Comp
 L power:GND #PWR021
 U 1 1 61283EEB
@@ -1672,6 +1665,16 @@ F 3 "~" H 6100 4500 50  0001 C CNN
 $EndComp
 Wire Wire Line
 	6000 4500 5950 4500
+Text Label 7500 4600 2    50   ~ 0
++5V
+Wire Wire Line
+	7500 3200 7500 2950
+Wire Wire Line
+	7500 2950 7350 2950
+Wire Wire Line
+	7350 2950 7350 3050
+Wire Wire Line
+	7500 4600 7600 4600
 Wire Bus Line
 	3550 2800 3550 3000
 Wire Bus Line
