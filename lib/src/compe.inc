@@ -60,14 +60,16 @@ M_PRBYTE	= $FF06
 
 ; reserved bytes here
 
-B_BEEP	        = $FF3F
-B_KEY_READ	= $FF42
-B_KEY_GET	= $FF45
-B_IO_INIT	= $FF48
+B_CPUTBYTE      = $FF36
+B_CGETBYTE      = $FF39
+B_BEEP          = $FF3F
+B_KEY_READ      = $FF42
+B_KEY_GET       = $FF45
+B_IO_INIT       = $FF48
 B_VRAM_CLEAR_FULL       = $FF4B
-B_VRAM_CLEAR	= $FF4E
-B_COUT_NO_CC	= $FF51
-B_COUT	        = $FF54
-B_CHECK_SCROLL	= $FF57
-B_SCROLL	= $FF5A
-B_COLDSTART	= $FF5D
+B_VRAM_CLEAR    = $FF4E
+B_COUT_NO_CC    = $FF51
+B_COUT          = $FF54
+B_CHECK_SCROLL  = $FF57
+B_SCROLL        = $FF5A
+B_COLDSTART     = $FF5D

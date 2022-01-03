@@ -41,8 +41,8 @@ B_Reserve14:            jmp     RESERVE
 B_Reserve15:            jmp     RESERVE
 B_Reserve16:            jmp     RESERVE
 B_Reserve17:            jmp     RESERVE
-B_Reserve18:            jmp     RESERVE
-B_Reserve19:            jmp     RESERVE
+B_CPUTBYTE:             jmp     CPUTBYTE
+B_CGETBYTE:             jmp     CGETBYTE
 B_SHOWMSG:              jmp     SHWMSG
 B_BEEP:                 jmp     BEEP
 B_KEY_READ:             jmp     KEY_READ

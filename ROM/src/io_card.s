@@ -97,3 +97,81 @@ BYTE_AVAIL:
         bne @D_LOOP             ; 3
         rts                     ; 6
 .endproc
+
+; CPUTBYTE
+; 
+; outputs byte in A register to cassette port
+
+.proc CPUTBYTE
+        ; initialize IO port for output
+        ldy     IO_VIA_PORTB    ; stash existing PORTB state
+        phy
+        ldy     IO_VIA_DDRB
+        phy
+
+        ldy     #IO_MASK_CAS_TX
+        sty     IO_VIA_PORTB
+        sty     IO_VIA_DDRB
+
+        ldy     #$07            ; init loop counter
+        sty     IO_VIA_PORTB    ; send start bit
+
+        ror                     ; shift right two times - move bit 0 to bit 7
+        ror                     ; gets shifted one more time (to bit 6) below
+@again:
+        jsr     CWAIT           ; wait for byte
+        ror                     ; rotate right (move up to next bit)
+        sta     IO_VIA_PORTB    ; write to VIA
+        dey
+        bpl     @again          ; keep going
+
+        jsr     CWAIT           ; wait for final bit to send
+        sty     IO_VIA_PORTB    ; sent stop bit (Y has $FF)
+        jsr     CWAIT           ; wait for two stop bits
+        jsr     CWAIT
+        
+        ply                     ; pull DDRB and PORTB off the stack
+        sty     IO_VIA_DDRB     ; and restore
+        ply
+        sty     IO_VIA_PORTB
+        rts
+.endproc
+
+; CGETBYTE
+; 
+; reads byte from the cassette port to the A register
+; assumes IO part isi n a valid state, ie 
+.proc CGETBYTE
+        ldy     #$08            ; init load counter
+start:
+        bit     IO_VIA_PORTB    ; wait for start bit - 1 > 0 transition
+        bmi     start
+        jsr     CHALFWAIT       ; wait half a byte's time, to be sampling in
+                                ; the center
+input:
+        jsr     CWAIT           ; full wait time between samples
+        asl     IO_VIA_PORTB    ; shift bit 7 (cassette RX) into carry
+        ror                     ; ... then into the accumulator
+        dey
+        bne     input           ; keep going if not at bit 0
+        beq     CWAIT           ; else, use WAIT to get into the stop bit
+.endproc
+
+; CWAIT
+;
+; 300 baud waiting time
+CWAIT:
+        jsr     CHALFWAIT       ; do half a wait, then fall through for the
+                                ; 2nd healf
+
+CHALFWAIT:                      ; half the waiting time
+        phy                     ; save Y
+        ldy     #$48            ; first part - 72 x 5us
+CWAIT1:
+        dey
+        bne     CWAIT1
+CWAIT2:
+        dey                     ; Y was 0 on entry, so 255 x 5us for 2nd part
+        bne     CWAIT2 
+        ply                     ; retrieve Y
+        rts
