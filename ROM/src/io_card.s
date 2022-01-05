@@ -229,6 +229,11 @@ read_data:
         bne     :+                      ; if it's wrapped, increment the high
         inc     STH                     ; address
 
+                                        ; and get a block checksum
+        jsr     CGETBYTE
+        cmp     CRC
+        bne     data_checksum_bad
+        
 :       cpy     L                       ; check if we're done - compare low byte
         bne     read_data
         lda     STH                     ; if it matches, compare high byte

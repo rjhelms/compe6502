@@ -56,10 +56,10 @@ def generate_byte(value: int) -> bytearray:
     return result
 
 
-def generate_leader(duration: int) -> bytearray:
+def generate_leader(duration: float) -> bytearray:
     """Generates a leader of MARK frequency for the requested duration"""
     result = bytearray()
-    cycles = duration * MARK_FREQ
+    cycles = round(duration * MARK_FREQ)
     for _ in range(cycles):
         result.extend(generate_cycle(MARK_FREQ))
 
@@ -140,9 +140,16 @@ def main():
 
         file_data = in_file.read()
         checksum = 0
+        i = 0
         for byte in file_data:
             array.extend(generate_byte(byte))
             checksum += byte
+            i += 1
+            if i % 256 == 0:
+                array.extend(generate_leader(0.1))
+                array.extend(generate_byte(checksum & 0xFF))
+                print(f" Block checksum: 0x{checksum & 0xFF:02X}")
+                array.extend(generate_leader(0.1))
 
         array.extend(generate_byte(checksum & 0xFF))
         print(f"  Data checksum: 0x{checksum & 0xFF:02X}")
