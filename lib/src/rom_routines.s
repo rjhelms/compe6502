@@ -10,8 +10,11 @@
         entrypoint _M_PRBYTE, M_PRBYTE
 
 ; reserved bytes here
+
+        entrypoint _B_CLOAD, B_CLOAD
         entrypoint _B_CPUTBYTE, B_CPUTBYTE
         entrypoint _B_CGETBYTE, B_CGETBYTE
+        entrypoint _B_SHOWMSG, B_SHOWMSG
         entrypoint _B_BEEP, B_BEEP
         entrypoint _B_KEY_READ, B_KEY_READ
         entrypoint _B_KEY_GET, B_KEY_GET

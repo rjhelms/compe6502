@@ -93,6 +93,8 @@ NEXTITEM:
         BEQ RUN         ;Yes, run user program.
         CMP #$CC        ;* "L"?
         BEQ LOADINT     ;* Yes, Load Intel Code.
+        CMP #$D4        ;* "T"? - rjh
+        BEQ LOADTAPE    ;* yes, load from tape
         STX L           ;$00->L.
         STX H           ; and H.
         STY YSAV        ;Save Y for comparison.
@@ -132,6 +134,10 @@ ACTRUN:
 LOADINT:
         JSR LOADINTEL   ;* Load the Intel code.
         JMP MON_WARMRESET   ;* When returned from the program, reset EWOZ.
+
+LOADTAPE:
+        JSR CLOAD       ; load from tape
+        JMP MON_WARMRESET
 
 NOESCAPE:
         BIT MODE        ;Test MODE byte.

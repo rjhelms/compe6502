@@ -40,8 +40,7 @@ PCH:    .res 1
         show_register SREG
         show_register PREG
         lda #$0D
-        jsr COUT
-        rts
+        jmp COUT
 .endproc
 
 .segment "RODATA"

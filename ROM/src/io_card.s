@@ -29,6 +29,7 @@ IO_MASK_CAS_RX          = %10000000
 
 IO_PCR_CA2_HANDSHAKE    = %00001000
 
+LOAD_PAGE               = $0400
 .segment "CODE"
 
 .proc IO_INIT
@@ -98,6 +99,163 @@ BYTE_AVAIL:
         rts                     ; 6
 .endproc
 
+; CLOAD
+;
+; load a file from cassette
+
+.proc   CLOAD
+        lda     #$0D
+        jsr     COUT
+        lda     #<MSG_PRESS_PLAY        ; display press play message
+        sta     MSGL
+        lda     #>MSG_PRESS_PLAY
+        sta     MSGH
+        jsr     SHWMSG
+        lda     #$00                    ; zero out checksum
+        sta     CRC
+
+header:
+        lda     #$09                    ; header starts with count down from
+        sta     STL                     ; $09
+count_in:
+        jsr     CGETBYTE                ; get the byte
+        cmp     STL                     ; compare with expected
+        bne     count_in                ; if not - maybe just a stray byte on
+                                        ; tape start?
+
+        clc                             ; add to checksum
+        adc     CRC
+        sta     CRC
+
+        dec     STL                     ; decrement expected byte
+
+        bpl     count_in                ; keep going 'til expected wraps around
+                                        ; to $FF
+
+
+        ldy     #$00
+
+get_name:                               ; load 8-byte file name
+        jsr     CGETBYTE                ; get byte from cassette
+        sta     LOAD_PAGE, Y            ; store in LOAD_PAGE
+
+        clc                             ; add to checksum
+        adc     CRC
+        sta     CRC
+
+        iny                             ; keep going until we have 8 bytes
+        cpy     #$08
+        bne     get_name
+        lda     #$00                    ; write $00 after the file name 
+        sta     LOAD_PAGE, Y
+
+        ldy     #$00
+
+get_addr:
+        jsr     CGETBYTE                ; get the start and end addresses
+        sta     STL                     ; and stash on zero page
+        clc
+        adc     CRC                     ; I bet this could be a loop as all
+        sta     CRC                     ; 4 variables are sequential
+
+        jsr     CGETBYTE
+        sta     STH
+        clc
+        adc     CRC
+        sta     CRC
+
+        jsr     CGETBYTE
+        sta     L
+        clc
+        adc     CRC
+        sta     CRC
+
+        jsr     CGETBYTE
+        sta     H
+        clc
+        adc     CRC
+        sta     CRC
+
+checksum:
+        jsr     CGETBYTE                ; get and validate the checksum
+        cmp     CRC
+        bne     header_checksum_bad
+header_checksum_good:
+        lda     #<MSG_HEADER_FOUND
+        sta     MSGL
+        lda     #>MSG_HEADER_FOUND
+        sta     MSGH
+        jmp     header_end
+header_checksum_bad:
+        lda     #<MSG_CHECKSUM_FAIL
+        sta     MSGL
+        lda     #>MSG_CHECKSUM_FAIL
+        sta     MSGH
+        jsr     SHWMSG
+        rts
+
+header_end:
+        jsr     SHWMSG                  ; output the details from the header
+        lda     #<LOAD_PAGE             ; file name
+        sta     MSGL
+        lda     #>LOAD_PAGE
+        sta     MSGH
+        jsr     SHWMSG
+        lda     #$0D
+        jsr     COUT
+        lda     STH                     ; start address
+        jsr     PRBYTE
+        lda     STL
+        jsr     PRBYTE
+        lda     #':'
+        jsr     COUT
+        lda     H                       ; end address
+        jsr     PRBYTE
+        lda     L
+        jsr     PRBYTE
+        lda     #$0D
+        jsr     COUT
+        ldy     #$00
+        sty     CRC
+read_data:
+        jsr     CGETBYTE                ; get a byte
+
+        sta     (STL), Y                ; store it in memory
+        clc
+        adc     CRC                     ; add to checksum
+        sta     CRC
+
+        iny                             ; increment Y
+        bne     :+                      ; if it's wrapped, increment the high
+        inc     STH                     ; address
+
+:       cpy     L                       ; check if we're done - compare low byte
+        bne     read_data
+        lda     STH                     ; if it matches, compare high byte
+        cmp     H
+        bne     read_data
+
+done:
+        jsr     CGETBYTE                ; get and validate the checksum
+        cmp     CRC
+        bne     data_checksum_bad
+data_checksum_good:
+        lda     #<MSG_CHECKSUM_OK
+        sta     MSGL
+        lda     #>MSG_CHECKSUM_OK
+        sta     MSGH
+        jmp     end
+data_checksum_bad:
+        lda     #<MSG_CHECKSUM_FAIL
+        sta     MSGL
+        lda     #>MSG_CHECKSUM_FAIL
+        sta     MSGH
+
+end:
+        jsr     SHWMSG
+        rts
+.endproc
+
 ; CPUTBYTE
 ; 
 ; outputs byte in A register to cassette port
@@ -140,8 +298,10 @@ BYTE_AVAIL:
 ; CGETBYTE
 ; 
 ; reads byte from the cassette port to the A register
-; assumes IO part isi n a valid state, ie 
+; assumes IO port is in a valid state
+
 .proc CGETBYTE
+        phy
         ldy     #$08            ; init load counter
 start:
         bit     IO_VIA_PORTB    ; wait for start bit - 1 > 0 transition
@@ -154,6 +314,7 @@ input:
         ror                     ; ... then into the accumulator
         dey
         bne     input           ; keep going if not at bit 0
+        ply
         beq     CWAIT           ; else, use WAIT to get into the stop bit
 .endproc
 
@@ -175,3 +336,13 @@ CWAIT2:
         bne     CWAIT2 
         ply                     ; retrieve Y
         rts
+
+.SEGMENT "RODATA"
+MSG_PRESS_PLAY:
+        .byte "Press play on cassette.", $0D, $00
+MSG_HEADER_FOUND:
+        .byte "Header found, loading ", $00
+MSG_CHECKSUM_OK:
+        .byte "Checksum OK", $0D, $00
+MSG_CHECKSUM_FAIL:
+        .byte "Checksum fail", $0D, $00

@@ -60,8 +60,10 @@ M_PRBYTE	= $FF06
 
 ; reserved bytes here
 
+B_CLOAD         = $FF33
 B_CPUTBYTE      = $FF36
 B_CGETBYTE      = $FF39
+B_SHOWMSG       = $FF3C
 B_BEEP          = $FF3F
 B_KEY_READ      = $FF42
 B_KEY_GET       = $FF45
