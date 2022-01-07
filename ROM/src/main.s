@@ -64,8 +64,8 @@ B_SCROLL:               jmp     SCROLL
         lda PWR_UP      ; check power up byte
         cmp #CHK_BYTE
         bne :+
-        jmp M_WARMRESET ; if set, go to warm reset
-                        ; otherwise, continue with startup
+        jmp MON_WARMRESET       ; if set, go to warm reset
+                                ; otherwise, continue with startup
 :       jsr VRAM_TEST
         jsr VRAM_CLEAR_FULL
         lda #<MSG_VRAM_OK
@@ -98,6 +98,12 @@ VECT_SET:
 
         lda PWR_UP      ; display magic byte
         jsr PRBYTE
+
+        LDA #<MSG_MON_WELCOME
+        STA MSGL
+        LDA #>MSG_MON_WELCOME
+        STA MSGH
+        JSR SHWMSG      ;* Show Welcome.
 
         jmp MON_COLDRESET
 .endproc

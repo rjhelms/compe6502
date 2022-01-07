@@ -28,11 +28,7 @@ CRCCHECK:   .res 1
 
 .segment "MON"
 MON_COLDRESET:
-        LDA #<MSG_MON_WELCOME
-        STA MSGL
-        LDA #>MSG_MON_WELCOME
-        STA MSGH
-        JSR SHWMSG      ;* Show Welcome.
+
 MON_WARMRESET: 
         LDA #$9B        ;* Auto escape.
 NOTCR:  
