@@ -2,8 +2,8 @@ import wave, argparse, os
 
 intensity = 0.25
 
-low_val = round(127 - (128 * intensity))
-high_val = round(127 + (128 * intensity))
+low_val = round(128 - (128 * intensity))
+high_val = round(128 + (128 * intensity))
 
 SAMPLE_RATE = 9600
 SPACE_FREQ = 1200
