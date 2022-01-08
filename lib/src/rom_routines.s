@@ -11,6 +11,7 @@
 
 ; reserved bytes here
 
+        entrypoint _B_CSAVE, B_CSAVE
         entrypoint _B_CLOAD, B_CLOAD
         entrypoint _B_CPUTBYTE, B_CPUTBYTE
         entrypoint _B_CGETBYTE, B_CGETBYTE

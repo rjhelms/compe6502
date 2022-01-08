@@ -60,6 +60,7 @@ M_PRBYTE	= $FF06
 
 ; reserved bytes here
 
+B_CSAVE         = $FF30
 B_CLOAD         = $FF33
 B_CPUTBYTE      = $FF36
 B_CGETBYTE      = $FF39

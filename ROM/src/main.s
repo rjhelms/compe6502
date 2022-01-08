@@ -39,7 +39,7 @@ B_Reserve12:            jmp     RESERVE
 B_Reserve13:            jmp     RESERVE
 B_Reserve14:            jmp     RESERVE
 B_Reserve15:            jmp     RESERVE
-B_Reserve16:            jmp     RESERVE
+B_CSAVE:                jmp     CSAVE
 B_CLOAD:                jmp     CLOAD
 B_CPUTBYTE:             jmp     CPUTBYTE
 B_CGETBYTE:             jmp     CGETBYTE

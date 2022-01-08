@@ -102,6 +102,7 @@ BYTE_AVAIL:
 ; CLOAD
 ;
 ; load a file from cassette
+; uses STL/STH for start/current address, L/H for end address
 
 .proc   CLOAD
         lda     #$0D
@@ -261,11 +262,145 @@ end:
         rts
 .endproc
 
+
+; CSAVE
+;
+; saves a programme to casette
+; uses STL/STH for start/current address, L/H for end address
+
+.proc CSAVE
+        lda     IO_VIA_PORTB            ; ensure TX is high
+        ora     #IO_MASK_CAS_TX
+        sta     IO_VIA_PORTB
+        lda     #$0D
+        jsr     COUT
+        lda     #<MSG_PRESS_RECORD      ; display press record message
+        sta     MSGL
+        lda     #>MSG_PRESS_RECORD
+        sta     MSGH
+
+        jsr     SHWMSG
+
+ret_wait:
+        jsr     KEY_GET              ; wait for key press
+        cmp     #$0D
+        bne     ret_wait
+
+        lda     #$00                    ; zero out checksum
+        sta     CRC
+
+in_leader:                              ; record 5 second leader
+        lda     #$32
+        jsr     CLEADER
+
+header:                                 ; write header
+        lda     #$09
+count_in:                               ; count down from $09 to 00
+        jsr     CPUTBYTE                ; write byte to cassette
+
+        tay
+        clc                             ; add to checksum
+        adc     CRC
+        sta     CRC
+        tya
+
+        dec                             ; decrement count
+        bpl     count_in                ; keep going until wrapped around
+
+        ldy     #$00
+store_name:                             ; write 8-byte file name
+        lda     LOAD_PAGE, Y            ; load name from LOAD_PAGE
+        jsr     CPUTBYTE                ; write to cassette
+
+        clc                             ; add to checksum
+        adc     CRC
+        sta     CRC
+
+        iny                             ; keep going until written 8 bytes
+        cpy     #$08
+        bne     store_name
+
+        ldy     #$00
+store_addr:
+        lda     STL
+        jsr     CPUTBYTE
+        clc
+        adc     CRC
+        sta     CRC
+
+        lda     STH
+        jsr     CPUTBYTE
+        clc
+        adc     CRC
+        sta     CRC
+
+        lda     L
+        jsr     CPUTBYTE
+        clc
+        adc     CRC
+        sta     CRC
+
+        lda     H
+        jsr     CPUTBYTE
+        clc
+        adc     CRC
+        sta     CRC
+
+checksum:
+        lda     CRC
+        jsr     CPUTBYTE
+
+        lda     #$0A                    ; 1 second leader
+        jsr     CLEADER
+
+        ldy     #$00                    ; zero out checksum for data write
+        sty     CRC
+
+write_data:
+        lda     (STL), Y                ; get a byte
+        jsr     CPUTBYTE
+        clc
+        adc     CRC
+        sta     CRC
+
+        iny                             ; increment Y
+        bne     :+                      
+        
+        inc     STH                     ; if wrapped, increment high address
+        lda     #$01                    ; and write a checksum block
+        jsr     CLEADER                 ; 0.1 sec leader
+        lda     CRC
+        jsr     CPUTBYTE                ; checksum byte
+        lda     #$01                    ; 0.1 sec leader
+        jsr     CLEADER
+
+:       cpy     L                       ; check if we're done - compare low byte
+        bne     write_data
+        lda     STH                     ; if it matches, compare high byte
+        cmp     H
+        bne     write_data
+
+done:                                   ; fallen through both checks, we're done
+        lda     CRC                     ; write the final checksum
+        jsr     CPUTBYTE
+out_leader:                             ; record 5 second leader
+        lda     #$32
+        jsr     CLEADER
+        lda     #<MSG_SAVE_COMPLETE     ; display save complete message
+        sta     MSGL
+        lda     #>MSG_SAVE_COMPLETE
+        sta     MSGH
+        jsr     SHWMSG
+        rts
+.endproc
+
 ; CPUTBYTE
 ; 
 ; outputs byte in A register to cassette port
 
 .proc CPUTBYTE
+        phy                     ; stash A & Y regs
+        pha
         ; initialize IO port for output
         ldy     IO_VIA_PORTB    ; stash existing PORTB state
         phy
@@ -297,6 +432,8 @@ end:
         sty     IO_VIA_DDRB     ; and restore
         ply
         sty     IO_VIA_PORTB
+        pla                     ; restore A & Y regs
+        ply
         rts
 .endproc
 
@@ -326,6 +463,7 @@ input:
 ; CWAIT
 ;
 ; 300 baud waiting time
+
 CWAIT:
         jsr     CHALFWAIT       ; do half a wait, then fall through for the
                                 ; 2nd healf
@@ -342,12 +480,45 @@ CWAIT2:
         ply                     ; retrieve Y
         rts
 
+; CLEADER
+;
+; writes a leader for the length specified in the accumulator
+; length defined in tenths of seconds (approximately)
+
+.proc CLEADER
+        phx                     ; stash X and A registers
+        pha
+        lda     IO_VIA_PORTB    ; ensure TX is high
+        ora     #IO_MASK_CAS_TX
+        sta     IO_VIA_PORTB
+        pla
+loop1:                          ; outer loop - 1/10th of second
+        ldx     #$1E            ; 30 byte periods
+
+loop2:                          ; inner loop - 1 byte period
+        jsr     CWAIT
+        dex
+        cpx     #$00
+        bne     loop2
+
+        dec
+        cmp     #$00
+        bne     loop1
+done:
+        plx                     ; restore X register
+        rts                     ; and return
+.endproc
+
 .SEGMENT "RODATA"
 MSG_PRESS_PLAY:
         .byte "Press play on cassette.", $0D, $00
+MSG_PRESS_RECORD:
+        .byte "Press record on cassette", $0D, "and hit enter.", $0D, $00
 MSG_HEADER_FOUND:
-        .byte "Header found, loading ", $00
+        .byte "Loading ", $00
 MSG_CHECKSUM_OK:
         .byte "Checksum OK", $0D, $00
 MSG_CHECKSUM_FAIL:
         .byte "Checksum fail", $0D, $00
+MSG_SAVE_COMPLETE:
+        .byte "Save complete", $0D, $00

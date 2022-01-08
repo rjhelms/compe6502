@@ -1,0 +1,30 @@
+Compé6502 Cassette format
+
+5 seconds leader
+
+header:
+	synchronization bytes: 0x09 0x08 0x07 0x06 0x05 0x04 0x03 0x02 0x01 0x00
+	file name: 8 bytes, padded with 0x00
+	start address: two bytes, low byte first
+	end address+1: two bytes, low byte first
+	header checksum (including sync)
+	
+1 second leader
+
+data:
+	blocks of 256 bytes of data, followed by
+		0.1 seconds of leader
+		data checksum (cumulative from start of data)
+		0.1 seconds of leader
+	
+data checksum
+
+5 second leader
+
+
+
+Leader:
+	solid 2400Hz tone
+
+Checksum:
+	running sum of all bytes MOD 256 (ie just low byte - add without carry)
