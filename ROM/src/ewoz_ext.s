@@ -1,5 +1,10 @@
 ; Extensions to eWoz
 
+.include "asminc/zeropage.inc"
+
+.import PRBYTE, SHWMSG
+.import BEEP, COUT
+
 .segment "ZEROPAGE"
 ; additional pointers for processor registers etc
 
@@ -24,7 +29,9 @@ PCH:    .res 1
 .endscope
 .endmacro
 
-.segment "MON"
+.segment "CODE"
+
+.export PRSTATUS
 
 .proc PRSTATUS
         lda #$0D

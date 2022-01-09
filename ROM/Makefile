@@ -14,7 +14,7 @@ TARGET = $(BIN)/$(PROJECT).bin
 CONFIG = compe6502_ROM.cfg
 CA_FLAGS =
 
-SOURCES = $(SRC)/main.s
+SOURCES = $(wildcard $(SRC)/*.s) $(wildcard $(SRC)/*/*.s)
 ASSEMBLY = $(patsubst $(SRC)/%.c, $(TEMP)/%.s, $(SOURCES))
 OBJECTS = $(patsubst $(SRC)/%.s, $(OBJ)/%.o, $(SOURCES))
 
@@ -26,12 +26,10 @@ all: $(TARGET)
 $(TARGET): $(OBJECTS) $(BIN)
 	$(LD) -C $(CONFIG) -Ln $(BIN)/$(PROJECT).lbl -m $(BIN)/$(PROJECT).map -o $(TARGET) $(OBJECTS) $(LIB)
 
-$(OBJ)/%.o: $(SRC)/%.s $(OBJ)
+$(OBJ)/%.o: $(SRC)/%.s
+	mkdir -p $(dir $@)
 	git rev-parse --short==2 HEAD | cat $(SRC)/rom_ver_stub.inc - > $(SRC)/rom_ver.inc
 	${CA} -v -o $@ $<
-
-$(OBJ):
-	mkdir $(OBJ)
 
 $(BIN):
 	mkdir $(BIN)

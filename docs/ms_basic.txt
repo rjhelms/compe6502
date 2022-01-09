@@ -1,12 +1,9 @@
 notes on basic implementation:
 
-- create a ZEROPAGE_BASIC segment (ZP, after ZEROPAGE), change zeropage.s to use
-    this instead of ZEROPAGE
-- rename existing VECTORS to BOOTVECTORS and add a VECTORS segment lower down
+- create a ZEROPAGE_BASIC segment (ZP, after ZEROPAGE), change zeropage.s to use this instead of 
+- rename existing VECTORS to BOOTVECTORS and add a VECTORS segment in BASROM
 - CODE segment used in both BASIC and ROM - probably easier to rename mine!
-	- create BIOS segment higher up
-
-- all BASIC segments go below BIOS
-    - align BIOS segment just fer grins
+	- create SYS segment higher up
 
 - need a DUMMY segment - see MSBASIC config for example
+
