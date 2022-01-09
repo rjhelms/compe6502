@@ -29,7 +29,7 @@ PCH:    .res 1
 .endscope
 .endmacro
 
-.segment "CODE"
+.segment "SYS"
 
 .export PRSTATUS
 

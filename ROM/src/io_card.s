@@ -36,7 +36,7 @@
 
 .export LOAD_PAGE               = $0400
 
-.segment "CODE"
+.segment "SYS"
 
 .export IO_INIT, KEY_GET, KEY_READ, BEEP, CLOAD, CSAVE, CPUTBYTE, CGETBYTE
 .export CLEADER

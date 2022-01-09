@@ -6,8 +6,6 @@
 
 ; adapted to ca65 and Compe6502 by Rob Hailman 2021
 
-; TODO: figure out the shenanigans about the high byte - do I need any of this?
-
 .PC02
 
 .include "../asminc/zeropage.inc"

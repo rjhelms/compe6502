@@ -5,7 +5,7 @@
 .import COUT, BEEP
 .import PRBYTE
 
-.segment "CODE"
+.segment "SYS"
 
 .proc MEM_TEST
 START:

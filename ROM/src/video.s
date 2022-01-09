@@ -15,7 +15,7 @@ SCREEN_END      = SLOT6 + $300
 SCREEN_PTR: .res 2
 SCROLL_PTR: .res 2
 
-.segment "CODE"
+.segment "SYS"
 
 .proc VRAM_TEST
 START:

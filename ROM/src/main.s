@@ -1,5 +1,3 @@
-.debuginfo + 
-
 .PC02
 
 .include "rom_ver.inc"
@@ -23,7 +21,7 @@ VECT_TAB_LEN    = VECT_TAB_START - VECT_TAB_END
 
 .export         IRQ_VECTOR, NMI_VECTOR
 
-.segment "CODE"
+.segment "SYS"
 RESERVE:
         rts
 
