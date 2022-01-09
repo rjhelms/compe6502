@@ -4,7 +4,7 @@
 ; via http://jefftranter.blogspot.co.uk/2012/05/woz-mon.html
 ; via https://gist.github.com/BigEd/2760560
 
-; adapted to ca65 and Compe6502 by Rob Hailman 2021
+; adapted to ca65 and Compe6502 by Rob Hailman 2021-2022
 
 .PC02
 
