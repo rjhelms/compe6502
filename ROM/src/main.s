@@ -1,6 +1,6 @@
 .PC02
 
-.include "rom_ver.inc"
+.include "../tmp/rom_ver.inc"
 .include "asminc/zeropage.inc"
 
 CHK_BYTE = <ROM_VER ^ >ROM_VER

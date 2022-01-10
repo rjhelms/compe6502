@@ -8,7 +8,7 @@
 
 .PC02
 
-.include "../asminc/zeropage.inc"
+.include "asminc/zeropage.inc"
 
 .import CLOAD, COUT, KEY_GET
 
