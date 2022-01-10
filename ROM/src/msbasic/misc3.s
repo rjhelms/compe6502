@@ -12,7 +12,9 @@ VARTAB_MINUS_2_TO_AY:
         dey
 LF42C:
         rts
+.endif
 
+.if .def(COMPE) || .def(KBD)
 ; ----------------------------------------------------------------------------
 GET_UPPER:
         lda     INPUTBUFFERX,x
@@ -25,8 +27,10 @@ LF438:
         sbc     #$1F
 LF43A:
         rts
+.endif
 
 ; ----------------------------------------------------------------------------
+.ifdef KBD
 GETLN:
         ldx     #$5D
 LF43D:

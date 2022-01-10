@@ -368,7 +368,7 @@ L2496:
 L2497:
         inx
 L2498:
-.ifdef KBD
+.if .def(KBD) || .def(COMPE)
         jsr     GET_UPPER
 .else
         lda     INPUTBUFFERX,x
