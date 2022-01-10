@@ -1,8 +1,11 @@
+.ifdef COMPE
+	.segment "ZPBASIC": zeropage
+.else
+	.feature org_per_seg
+	.zeropage
 
-.feature org_per_seg
-.zeropage
-
-.org ZP_START1
+	.org ZP_START1
+.endif
 
 GORESTART:
 	.res 3
@@ -13,7 +16,10 @@ GOAYINT:
 GOGIVEAYF:
 	.res 2
 
-.org ZP_START2
+.ifndef COMPE
+	.org ZP_START2
+.endif
+
 Z15:
 	.res 1
 .ifndef POSX; allow override
@@ -37,7 +43,9 @@ TXPSV:
 INPUTBUFFER:
 .endif
 
-.org ZP_START3
+.ifndef COMPE
+	.org ZP_START3
+.endif
 
 CHARAC:
 	.res 1
@@ -64,7 +72,9 @@ CPRMASK:
 Z14:
 	.res 1
 
-.org ZP_START4
+.ifndef COMPE
+	.org ZP_START4
+.endif
 
 TEMPPT:
 	.res 1
