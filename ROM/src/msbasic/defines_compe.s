@@ -10,11 +10,12 @@ RAMSTART2       := $0600
 STACK_TOP       := $FE
 SPACE_FOR_GOSUB := $36
 
-.import COUT, KEY_READ, KEY_GET, MON_WARMRESET
+.import COUT, KEY_READ, KEY_GET, MON_WARMRESET, VRAM_CLEAR_FULL
 
 MONCOUT         = COUT
 USR             = GORESTART ; I don't know what this means
 SYS             = MON_WARMRESET
+HOME            = VRAM_CLEAR_FULL
 
 WIDTH           = 32
 WIDTH2          = 24
