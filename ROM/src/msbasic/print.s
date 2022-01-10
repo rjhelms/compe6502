@@ -93,7 +93,7 @@ LE878:
 
 .ifndef KBD
 L29B9:
-  .ifdef CBM2
+  .if .def(CBM2) || .def(COMPE)
         lda     #$00
         sta     INPUTBUFFER,x
         ldx     #<(INPUTBUFFER-1)

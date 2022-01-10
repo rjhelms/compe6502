@@ -26,4 +26,8 @@
 .ifdef SYM1
 .include "sym1_iscntc.s"
 .endif
+.ifdef COMPE
+.include "compe_iscntc.s"
+.endif
+
 ;!!! runs into "STOP"

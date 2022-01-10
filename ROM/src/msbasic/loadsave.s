@@ -15,3 +15,6 @@
 .ifdef SYM1
 .include "sym1_loadsave.s"
 .endif
+.ifdef COMPE
+.include "compe_loadsave.s"
+.endif

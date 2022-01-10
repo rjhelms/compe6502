@@ -11,3 +11,10 @@
 .ifdef SYM1
         jmp     PR_WRITTEN_BY
 .endif
+.ifdef COMPE
+BASIC_COLD:
+        jmp     COLD_START
+BASIC_WARM:
+        jmp     RESTART
+.export BASIC_COLD, BASIC_WARM
+.endif

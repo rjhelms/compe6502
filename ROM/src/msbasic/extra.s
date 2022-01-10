@@ -24,6 +24,10 @@
 .include "aim65_extra.s"
 .endif
 
+.ifdef COMPE
+.include "compe_extra.s"
+.endif
+
 .ifdef SYM1
         .byte   0,0,0
 .endif

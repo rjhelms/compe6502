@@ -203,6 +203,7 @@ L4098:
   .endif
         ldx     #TEMPST
         stx     TEMPPT
+.ifndef COMPE
 .ifndef CONFIG_CBM_ALL
         lda     #<QT_MEMORY_SIZE
         ldy     #>QT_MEMORY_SIZE
@@ -223,6 +224,7 @@ L4098:
   .endif
         tay
         bne     L40EE
+.endif
 .endif
 .ifndef CBM2
         lda     #<RAMSTART2
@@ -298,6 +300,7 @@ L40FA:
         sty     FRETOP+1
 .endif
 L4106:
+.ifndef COMPE
 .ifndef CONFIG_CBM_ALL
   .ifdef APPLE
         lda     #$FF
@@ -339,6 +342,7 @@ L4129:
         clc
         adc     Z17
         sta     Z18
+.endif
 .endif
 L4136:
 .ifdef CONFIG_RAM

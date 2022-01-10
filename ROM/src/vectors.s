@@ -16,7 +16,7 @@
         PWR_UP:         .res 1
         VECT_TAB_END:
 
-.segment "VECTORS"
+.segment "BOOTVECT"
 
 .addr NMI_VECTOR
 .addr B_COLDSTART

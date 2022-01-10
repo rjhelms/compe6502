@@ -17,6 +17,8 @@ CHK_BYTE = <ROM_VER ^ >ROM_VER
 .import         MEM_TEST
 .import         VRAM_TEST
 
+.import         BASIC_COLD, BASIC_WARM
+
 VECT_TAB_LEN    = VECT_TAB_START - VECT_TAB_END
 
 .export         IRQ_VECTOR, NMI_VECTOR
@@ -63,7 +65,7 @@ jumptable       B_IO_INIT,              IO_INIT
 jumptable       B_VRAM_CLEAR_FULL,      VRAM_CLEAR_FULL
 jumptable       B_VRAM_CLEAR,           VRAM_CLEAR
 jumptable       B_COUT_NO_CC,           COUT_NO_CC
-jumptable       B_COUT,                 B_COUT
+jumptable       B_COUT,                 COUT
 jumptable       B_CHECK_SCROLL,         CHECK_SCROLL
 jumptable       B_SCROLL,               SCROLL
 
@@ -78,7 +80,7 @@ jumptable       B_SCROLL,               SCROLL
         lda PWR_UP      ; check power up byte
         cmp #CHK_BYTE
         bne :+
-        jmp MON_WARMRESET       ; if set, go to warm reset
+        jmp BASIC_WARM          ; if set, go to warm reset
                                 ; otherwise, continue with startup
 :       jsr VRAM_TEST
         jsr VRAM_CLEAR_FULL
@@ -119,7 +121,7 @@ VECT_SET:
         STA MSGH
         JSR SHWMSG      ;* Show Welcome.
 
-        jmp MON_COLDRESET
+        jmp BASIC_COLD
 .endproc
 
 ; hard vector for IRQ

@@ -71,6 +71,9 @@
 		keyword_rts "OPEN", OPEN
 		keyword_rts "CLOSE", CLOSE
 .endif
+.ifdef COMPE
+		keyword_rts "SYS", SYS
+.endif
 .ifndef CONFIG_SMALL
 		keyword_rts "GET", GET
 .endif
