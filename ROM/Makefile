@@ -14,24 +14,30 @@ TARGET = $(BIN)/$(PROJECT).bin
 CONFIG = compe6502_ROM.cfg
 CA_FLAGS =
 
-SOURCES = $(wildcard $(SRC)/*.s) $(wildcard $(SRC)/*/*.s)
+SOURCES = $(wildcard $(SRC)/*.s)
 ASSEMBLY = $(patsubst $(SRC)/%.c, $(TEMP)/%.s, $(SOURCES))
 OBJECTS = $(patsubst $(SRC)/%.s, $(OBJ)/%.o, $(SOURCES))
 
 INCLUDES = $(wildcard $(SRC)/asminc/*.inc)
 ROM_VER = $(TEMP)/rom_ver.inc
 
+MSBASIC_SOURCES = $(wildcard $(SRC/msbasic/*))
+MSBASIC_OBJECT = $(OBJ)/msbasic.o
+
 .PHONY: all clean
 .SECONDARY: 
 
 all: $(TARGET) 
 
-$(TARGET): $(OBJECTS) $(BIN)
-	$(LD) -C $(CONFIG) -Ln $(BIN)/$(PROJECT).lbl -m $(BIN)/$(PROJECT).map -o $(TARGET) $(OBJECTS) $(LIB)
+$(TARGET): $(OBJECTS) $(MSBASIC_OBJECT) $(BIN)
+	$(LD) -C $(CONFIG) -Ln $(BIN)/$(PROJECT).lbl -m $(BIN)/$(PROJECT).map -o $(TARGET) $(OBJECTS) $(MSBASIC_OBJECT) $(LIB)
 
 
 $(OBJ)/%.o: $(SRC)/%.s $(OBJ) $(INCLUDES) $(ROM_VER)
 	${CA} -v -o $@ $<
+
+$(MSBASIC_OBJECT): $(MSBASIC_SOURCES)
+	$(CA) -D compe -v -o $(MSBASIC_OBJECT) $(SRC)/msbasic/msbasic.s
 
 $(BIN):
 	mkdir $(BIN)
