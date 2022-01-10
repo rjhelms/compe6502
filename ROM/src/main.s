@@ -1,59 +1,73 @@
-.debuginfo + 
-
 .PC02
 
-.include "rom_ver.inc"
+.include "../tmp/rom_ver.inc"
+.include "asminc/zeropage.inc"
 
 CHK_BYTE = <ROM_VER ^ >ROM_VER
 .out .string(<CHK_BYTE)
 
-.include "slot_defs.inc"
-.include "io_card.s"
-.include "video.s"
-.include "memtest.s"
-.include "vectors.s"
+.importzp       XAML, XAMH, STL, STH, L, H, YSAV, MODE, MSGL, MSGH, COUNTER
+.importzp       COUNTER, CRC, CRCCHECK
 
-.include "ewoz/ewoz.s"
-.include "ewoz_ext.s"
+.import         NMIVEC0, BRKVEC0, IRQVEC0, BRKRET0, IRQRET0, PWR_UP
+.import         VECT_TAB_START, VECT_TAB_END
 
-.segment "CODE"
+.import         PRSTATUS
+
+.import         MEM_TEST
+.import         VRAM_TEST
+
+VECT_TAB_LEN    = VECT_TAB_START - VECT_TAB_END
+
+.export         IRQ_VECTOR, NMI_VECTOR
+
+.segment "SYS"
 RESERVE:
         rts
 
 .segment "BIOS"
 
+.macro  jumptable LBL, DEST
+        .global DEST
+        LBL:            jmp     DEST
+        .export LBL
+.endmacro
+
 ; jump table for BIOS functions
-M_COLDRESET:            jmp     MON_COLDRESET
-M_WARMRESET:            jmp     MON_WARMRESET
-M_PRBYTE:               jmp     PRBYTE
-B_Reserve03:            jmp     RESERVE
-B_Reserve04:            jmp     RESERVE
-B_Reserve05:            jmp     RESERVE
-B_Reserve06:            jmp     RESERVE
-B_Reserve07:            jmp     RESERVE
-B_Reserve08:            jmp     RESERVE
-B_Reserve09:            jmp     RESERVE
-B_Reserve10:            jmp     RESERVE
-B_Reserve11:            jmp     RESERVE
-B_Reserve12:            jmp     RESERVE
-B_Reserve13:            jmp     RESERVE
-B_Reserve14:            jmp     RESERVE
-B_Reserve15:            jmp     RESERVE
-B_CSAVE:                jmp     CSAVE
-B_CLOAD:                jmp     CLOAD
-B_CPUTBYTE:             jmp     CPUTBYTE
-B_CGETBYTE:             jmp     CGETBYTE
-B_SHOWMSG:              jmp     SHWMSG
-B_BEEP:                 jmp     BEEP
-B_KEY_READ:             jmp     KEY_READ
-B_KEY_GET:              jmp     KEY_GET
-B_IO_INIT:              jmp     IO_INIT
-B_VRAM_CLEAR_FULL:      jmp     VRAM_CLEAR_FULL
-B_VRAM_CLEAR:           jmp     VRAM_CLEAR
-B_COUT_NO_CC:           jmp     COUT_NO_CC
-B_COUT:                 jmp     COUT
-B_CHECK_SCROLL:         jmp     CHECK_SCROLL
-B_SCROLL:               jmp     SCROLL
+
+jumptable       M_COLDRESET,            MON_COLDRESET
+jumptable       M_WARMRESET,            MON_WARMRESET
+jumptable       M_PRBYTE,               PRBYTE
+jumptable       B_Reserve03,            RESERVE
+jumptable       B_Reserve04,            RESERVE
+jumptable       B_Reserve05,            RESERVE
+jumptable       B_Reserve06,            RESERVE
+jumptable       B_Reserve07,            RESERVE
+jumptable       B_Reserve08,            RESERVE
+jumptable       B_Reserve09,            RESERVE
+jumptable       B_Reserve10,            RESERVE
+jumptable       B_Reserve11,            RESERVE
+jumptable       B_Reserve12,            RESERVE
+jumptable       B_Reserve13,            RESERVE
+jumptable       B_Reserve14,            RESERVE
+jumptable       B_Reserve15,            RESERVE
+jumptable       B_CSAVE,                CSAVE
+jumptable       B_CLOAD,                CLOAD
+jumptable       B_CPUTBYTE,             CPUTBYTE
+jumptable       B_CGETBYTE,             CGETBYTE
+jumptable       B_SHOWMSG,              SHWMSG
+jumptable       B_BEEP,                 BEEP
+jumptable       B_KEY_READ,             KEY_READ
+jumptable       B_KEY_GET,              KEY_GET
+jumptable       B_IO_INIT,              IO_INIT
+jumptable       B_VRAM_CLEAR_FULL,      VRAM_CLEAR_FULL
+jumptable       B_VRAM_CLEAR,           VRAM_CLEAR
+jumptable       B_COUT_NO_CC,           COUT_NO_CC
+jumptable       B_COUT,                 B_COUT
+jumptable       B_CHECK_SCROLL,         CHECK_SCROLL
+jumptable       B_SCROLL,               SCROLL
+
+.export B_COLDSTART
 
 .proc B_COLDSTART
         cld
@@ -87,7 +101,7 @@ VECT_SET:
         lda VEC_DATA, Y
         sta NMIVEC0, Y
         iny
-        cpy #VEC_TAB_LEN
+        cpy #<VECT_TAB_LEN
         bne VECT_SET
 
         lda #<MSG_MEM_ROM_VER
@@ -99,9 +113,9 @@ VECT_SET:
         lda PWR_UP      ; display magic byte
         jsr PRBYTE
 
-        LDA #<MSG_MON_WELCOME
+        LDA #<MSG_WELCOME
         STA MSGL
-        LDA #>MSG_MON_WELCOME
+        LDA #>MSG_WELCOME
         STA MSGH
         JSR SHWMSG      ;* Show Welcome.
 
@@ -165,6 +179,11 @@ MSG_VRAM_OK:    .byte "VRAM OK", $0D, $00
 MSG_MEM_TEST:   .byte "RAM TEST ", $00
 MSG_MEM_ROM_VER:
                 .byte "ROM CHECKSUM ", $00
+MSG_WELCOME:
+        .byte $0D
+        .byte $C9, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $BB, $0D
+        .byte $BA, " Comp", $82, "6502 ", $BA, $0D
+        .byte $C8, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $BC, $0D, $0D, 0
 VEC_DATA:
         .addr BRK_DEFAULT       ; NMIVEC0
         .addr BRK_DEFAULT       ; BRKVEC0

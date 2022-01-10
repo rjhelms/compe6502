@@ -1,4 +1,11 @@
-.segment "CODE"
+.include "asminc/zeropage.inc"
+
+.export MEM_TEST
+
+.import COUT, BEEP
+.import PRBYTE
+
+.segment "SYS"
 
 .proc MEM_TEST
 START:

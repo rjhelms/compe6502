@@ -1,5 +1,8 @@
 .PC02
 
+.include "asminc/zeropage.inc"
+.include "asminc/slot_defs.inc"
+
 .export IO_VIA_START    = SLOT0
 .export IO_VIA_PORTB    = IO_VIA_START + $00
 .export IO_VIA_PORTA    = IO_VIA_START + $01
@@ -18,19 +21,28 @@
 .export IO_VIA_IER      = IO_VIA_START + $0E
 .export IO_VIA_PORTA_NH = IO_VIA_START + $0F
 
-IO_MASK_SD_MISO         = %00000001
-IO_MASK_SD_MOSI         = %00000010
-IO_MASK_SD_SCK          = %00000100
-IO_MASK_SD_CS           = %00001000
-IO_MASK_KBD_REPT        = %00010000
-IO_MASK_SPKR            = %00100000
-IO_MASK_CAS_TX          = %01000000
-IO_MASK_CAS_RX          = %10000000
+.export IO_MASK_SD_MISO         = %00000001
+.export IO_MASK_SD_MOSI         = %00000010
+.export IO_MASK_SD_SCK          = %00000100
+.export IO_MASK_SD_CS           = %00001000
+.export IO_MASK_KBD_REPT        = %00010000
+.export IO_MASK_SPKR            = %00100000
+.export IO_MASK_CAS_TX          = %01000000
+.export IO_MASK_CAS_RX          = %10000000
 
-IO_PCR_CA2_HANDSHAKE    = %00001000
+.export IO_PCR_CA2_HANDSHAKE    = %00001000
 
-LOAD_PAGE               = $0400
-.segment "CODE"
+.segment "SD_WORK"
+
+.export LOAD_PAGE               = $0400
+
+.segment "SYS"
+
+.export IO_INIT, KEY_GET, KEY_READ, BEEP, CLOAD, CSAVE, CPUTBYTE, CGETBYTE
+.export CLEADER
+
+.import SHWMSG, PRBYTE
+.import COUT
 
 .proc IO_INIT
         pha

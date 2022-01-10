@@ -1,14 +1,21 @@
 .PC02
 
+.include "asminc/slot_defs.inc"
+.include "asminc/zeropage.inc"
+
+.import BEEP
+.export VRAM_TEST, VRAM_CLEAR, VRAM_CLEAR_FULL, COUT_NO_CC, COUT, CHECK_SCROLL
+.export SCROLL
+
 VRAM_START      = SLOT6
 VRAM_END        = SLOT6 + $400
 SCREEN_END      = SLOT6 + $300
 
-.segment "ZEROPAGE"
+.segment "ZPBIOS": zeropage
 SCREEN_PTR: .res 2
 SCROLL_PTR: .res 2
 
-.segment "CODE"
+.segment "SYS"
 
 .proc VRAM_TEST
 START:

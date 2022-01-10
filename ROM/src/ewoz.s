@@ -4,14 +4,20 @@
 ; via http://jefftranter.blogspot.co.uk/2012/05/woz-mon.html
 ; via https://gist.github.com/BigEd/2760560
 
-; adapted to ca65 and Compe6502 by Rob Hailman 2021
+; adapted to ca65 and Compe6502 by Rob Hailman 2021-2022
 
-; TODO: figure out the shenanigans about the high byte - do I need any of this?
+.PC02
+
+.include "asminc/zeropage.inc"
+
+.import CLOAD, COUT, KEY_GET
+
+.export MON_COLDRESET, MON_WARMRESET, PRBYTE, SHWMSG
 
 .segment "BSS"
 IN:         .res 256    ;*Input buffer
 
-.segment "ZEROPAGE"
+.segment "ZPMON": zeropage
 XAML:       .res 1      ;*Index pointers
 XAMH:       .res 1        
 STL:        .res 1
@@ -342,11 +348,6 @@ SHWMSG:
 
 
 .SEGMENT "RODATA"
-MSG_MON_WELCOME:
-        .byte $0D
-        .byte $C9, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $BB, $0D
-        .byte $BA, " Comp", $82, "6502 ", $BA, $0D
-        .byte $C8, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $BC, $0D, $0D, 0
 MSG_HEX_START:  .byte "Start Intel Hex code Transfer.",0
 MSG_HEX_OK:     .byte "Intel Hex Imported OK.",0
 MSG_HEX_FAIL:   .byte "Intel Hex Imported with checksum error.",0
