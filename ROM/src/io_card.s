@@ -166,12 +166,16 @@ get_name:                               ; load 8-byte file name
 
 get_addr:
         jsr     CGETBYTE                ; get the start and end addresses
+        pha                             ; push low byte of start address to
+                                        ;       stack
         sta     STL                     ; and stash on zero page
         clc
         adc     CRC                     ; I bet this could be a loop as all
         sta     CRC                     ; 4 variables are sequential
 
         jsr     CGETBYTE
+        pha                             ; push high byte of start address to
+                                        ;       stack
         sta     STH
         clc
         adc     CRC
@@ -270,6 +274,10 @@ data_checksum_bad:
         sta     MSGH
 
 end:
+        pla                             ; recover STL/STH values from stack
+        sta     STH
+        pla
+        sta     STL
         jsr     SHWMSG
         rts
 .endproc
