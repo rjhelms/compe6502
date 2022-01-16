@@ -1,0 +1,3 @@
+(fp_lib_table
+  (lib (name "footprints")(type "KiCad")(uri "C:/Users/rob/Documents/GitHub/compe6502/Hardware/lib/footprints")(options "")(descr ""))
+)

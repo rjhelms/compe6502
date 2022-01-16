@@ -1,0 +1,4 @@
+(sym_lib_table
+  (lib (name "WDC_65Cx")(type "KiCad")(uri "${KIPRJMOD}/../lib/WDC_65Cx.kicad_sym")(options "")(descr ""))
+  (lib (name "Misc")(type "KiCad")(uri "C:/Users/rob/Documents/GitHub/compe6502/Hardware/lib/Misc.kicad_sym")(options "")(descr ""))
+)
