@@ -51,6 +51,8 @@ ESCAPE:
 GETLINE:
         LDA #$8D        ;CR.
         JSR ECHO        ;Output it.
+        LDA #$2A        ; asterisk
+        JSR ECHO
         LDY #$01        ;Initiallize text index.
 BACKSPACE: 
         DEY             ;Backup text index.
