@@ -7,7 +7,7 @@ GENERIC_CHRGET:
 GENERIC_CHRGOT:
 GENERIC_TXTPTR = GENERIC_CHRGOT + 1
         lda     $EA60
-.ifdef KBD
+.if .def(COMPE) || .def(KBD)
         jsr     LF430
 .endif
         cmp     #$3A
