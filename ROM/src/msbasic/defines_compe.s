@@ -1,9 +1,9 @@
 CONFIG_2C                       := 1
 CONFIG_PEEK_SAVE_LINNUM         := 1
 CONFIG_SCRTCH_ORDER             := 1
-CONFIG_NO_LINE_EDITING          := 1    ; support for "@", "_", BEL etc.
+; CONFIG_NO_LINE_EDITING          := 1    ; support for "@", "_", BEL etc.
 CONIFG_NO_READ_Y_IS_ZERO_HACK   := 1
-
+CONFIG_NO_CR                    := 1
 
 ; inputbuffer
 INPUTBUFFER     := $0200
