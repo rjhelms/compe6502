@@ -62,8 +62,9 @@ BACKSPACE:
         LDA #$88        ;*Backspace again to get to correct pos.
         JSR ECHO
 NEXTCHAR:
-        LDA #$B1        ; rjh - NEXTCHAR adapted for VIA input    
-        STA (SCREEN_PTR)    ; draw a cursor
+        ; TODO: figure out cursor drawing with Pico
+        ; LDA #$B1        ; rjh - NEXTCHAR adapted for VIA input    
+        ; STA (SCREEN_PTR)    ; draw a cursor
 @WAIT: 
         JSR KEY_GET     ; rjh - wait for a character
         CMP #$60        ;*Is it Lower case

@@ -2,7 +2,7 @@
 
 .export MEM_TEST
 
-.import COUT, BEEP
+.import COUT, BEEP, MOVE_X_REL
 .import PRBYTE
 
 .segment "SYS"
@@ -44,10 +44,8 @@ CHECKAA:
         inc MSGH
 
 DISP_ADDR:
-        sec
-        lda SCREEN_PTR
-        sbc #$04
-        sta SCREEN_PTR
+        lda #$FC
+        jsr MOVE_X_REL
 
         lda MSGH
         jsr PRBYTE

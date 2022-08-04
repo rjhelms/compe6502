@@ -66,8 +66,8 @@ jumptable       B_VRAM_CLEAR_FULL,      VRAM_CLEAR_FULL
 jumptable       B_VRAM_CLEAR,           VRAM_CLEAR
 jumptable       B_COUT_NO_CC,           COUT_NO_CC
 jumptable       B_COUT,                 COUT
-jumptable       B_CHECK_SCROLL,         CHECK_SCROLL
-jumptable       B_SCROLL,               SCROLL
+jumptable       B_VIDEO_INIT,           VIDEO_INIT
+jumptable       B_Reserve30,            RESERVE
 
 .export B_COLDSTART
 
@@ -76,7 +76,7 @@ jumptable       B_SCROLL,               SCROLL
         cli
 
         jsr IO_INIT
-
+        jsr VIDEO_INIT
         lda PWR_UP      ; check power up byte
         cmp #CHK_BYTE
         bne :+
@@ -115,11 +115,11 @@ VECT_SET:
         lda PWR_UP      ; display magic byte
         jsr PRBYTE
 
-        LDA #<MSG_WELCOME
-        STA MSGL
-        LDA #>MSG_WELCOME
-        STA MSGH
-        JSR SHWMSG      ;* Show Welcome.
+        lda #<MSG_WELCOME
+        sta MSGL
+        lda #>MSG_WELCOME
+        sta MSGH
+        jsr SHWMSG      ;* Show Welcome.
 
         jmp BASIC_COLD
 .endproc

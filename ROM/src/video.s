@@ -1,212 +1,113 @@
+
+; Video routines for Pico-based video board
+
+; The general operation of these routines is that the Pico is operating in text
+; mode, and control will be returned to the calling program with the Pico back
+; in text mode.
+
 .PC02
 
 .include "asminc/slot_defs.inc"
 .include "asminc/zeropage.inc"
 
 .import BEEP
-.export VRAM_TEST, VRAM_CLEAR, VRAM_CLEAR_FULL, COUT_NO_CC, COUT, CHECK_SCROLL
-.export SCROLL
+.export VIDEO_SEND_BYTE, VIDEO_INIT
+.export VRAM_TEST, VRAM_CLEAR, VRAM_CLEAR_FULL
+.export MOVE_X_REL, MOVE_Y_REL
+.export COUT_NO_CC, COUT
 
-VRAM_START      = SLOT6
-VRAM_END        = SLOT6 + $400
-SCREEN_END      = SLOT6 + $300
+VRAM_START      = SLOT1
+VRAM_END        = SLOT1 + $400
+SCREEN_END      = SLOT1 + $300
+
+VIDEO_STATUS    = SLOT1
+VIDEO_DATA      = SLOT1 + $01
 
 .segment "ZPBIOS": zeropage
-SCREEN_PTR: .res 2
-SCROLL_PTR: .res 2
+VIDCMDL:        .res 1
+VIDCMDH:        .res 1
 
 .segment "SYS"
 
+.proc VIDEO_SEND_BYTE
+        bit VIDEO_STATUS        ; check if buffer is full
+        bpl VIDEO_SEND_BYTE     ; spin if it is
+        sta VIDEO_DATA          ; write accumulator to FIFO
+        rts
+.endproc
+
+.proc VIDEO_INIT
+        lda #$F0
+        jsr VIDEO_SEND_BYTE
+        lda #$02
+        jmp VIDEO_SEND_BYTE
+.endproc
+
 .proc VRAM_TEST
-START:
-        lda #<VRAM_START        ; initialize SCREEN_PTR to top of VRAM
-        sta SCREEN_PTR
-        lda #>VRAM_START
-        sta SCREEN_PTR + 1
-        ldy #$00
-
-CHECK15:
-        lda #$15                ; store #$15 into current address
-        sta (SCREEN_PTR), Y
-        lda (SCREEN_PTR), Y     ; read back from VRAM
-        cmp #$15                ; compare with #$15
-        bne BAD_MEM             ; if not matching, this address is bad
-        jmp CHECKEA             ; ... otherwise, try with $EA
-
-BAD_MEM:
-        jmp FAIL
-
-CHECKEA:
-        lda #$EA                ; store #$EA into current address
-        sta (SCREEN_PTR), Y
-        lda (SCREEN_PTR), Y     ; read back from VRAM
-        cmp #$EA                ; compare with #$EA
-        bne BAD_MEM             ; if not matching, this address is bad
-
-        iny                     ; increment Y (low byte of address)
-        bne CHECK15             ; if not $00, continue with next address
-        inc SCREEN_PTR + 1      ; otherwise, increment high byte
-        lda SCREEN_PTR + 1      ; check if we're at VRAM_END
-        cmp #>VRAM_END
-        beq DONE                ; if so, done
-        jmp CHECK15             ; otherwise, continue with next address
-
-DONE:
-        lda #<VRAM_START        ; reset screen pointer to top of VRAM
-        sta SCREEN_PTR
-        lda #>VRAM_START
-        sta SCREEN_PTR + 1
-        rts                     ; and return
-FAIL:
-        jmp FAIL                ; failed - just spin at last address
+        rts                     ; just don't do it for now - eventually will pull this out
 .endproc
 
 ; VRAM_CLEAR_FULL
 ; resets the screen pointer, and falls through to VRAM_CLEAR to write $00 to
 ; the end of VRAM
 .proc VRAM_CLEAR_FULL
-        lda #<VRAM_START        ; reset screen pointer
-        sta SCREEN_PTR
-        lda #>VRAM_START
-        sta SCREEN_PTR + 1
+        lda #$03                 ; end text mode
+        jsr VIDEO_SEND_BYTE
+        lda #$FE                 ; clear screen
+        jsr VIDEO_SEND_BYTE
+        lda #$02                 ; start text mode
+        jsr VIDEO_SEND_BYTE
 .endproc
 
 ; VRAM_CLEAR
 ; writes $00 from the screen pointer to the end of VRAM
 .proc VRAM_CLEAR
-        ldy #$00
-STORE:
-        lda #$00                ; store #$00 to current address
-        sta (SCREEN_PTR), Y
-        iny                     ; increment low byte
-        bne STORE
-        inc SCREEN_PTR + 1      ; increment high byte
-        lda SCREEN_PTR + 1
-        cmp #>VRAM_END
-        beq DONE                ; done if at end of VRAM
-        jmp STORE
-DONE:
-        lda #<VRAM_START        ; reset screen pointer
-        sta SCREEN_PTR
-        lda #>VRAM_START
-        sta SCREEN_PTR + 1
-        rts                     ; and return
+        rts
+.endproc
+
+.proc MOVE_X_REL
+        pha
+        lda #$03
+        jsr VIDEO_SEND_BYTE
+        lda #$DC
+        jsr VIDEO_SEND_BYTE
+        pla
+        jsr VIDEO_SEND_BYTE
+        lda #$02
+        jmp VIDEO_SEND_BYTE
+.endproc
+
+.proc MOVE_Y_REL
+        pha
+        lda #$03
+        jsr VIDEO_SEND_BYTE
+        lda #$DD
+        jsr VIDEO_SEND_BYTE
+        pla
+        jsr VIDEO_SEND_BYTE
+        lda #$02
+        jmp VIDEO_SEND_BYTE
 .endproc
 
 ; COUT_NO_CC
 ; output value in A register to console, without handling control characters
 .proc COUT_NO_CC
-        phy
-        ldy #$00                ; set Y index to 0
-        sta (SCREEN_PTR), Y     ; store A register to current address in
-                                ;         SCREEN_PTR
-        inc SCREEN_PTR          ; increment low byte of SCREEN_PTR
-        bne RET                 ; if not 0, return
-        inc SCREEN_PTR + 1      ; else increment high byte of SCREEN_PTR
-RET:
-        ply
-        jmp CHECK_SCROLL
+        pha     ; push byte to stack
+        lda #$03 ; end text
+        jsr VIDEO_SEND_BYTE
+        lda #$D0 ; write single character
+        jsr VIDEO_SEND_BYTE
+        pla     ; pop byte off stack to send
+        jsr VIDEO_SEND_BYTE
+        lda #$02 ; start text
+        jmp VIDEO_SEND_BYTE
 .endproc
 
 ; COUT
 ; output value in A register to console, handling control characters
 .proc COUT
-        cmp #$20
-        bcs COUT_NO_CC
 CHK_07: cmp #$07        ; bell
-        bne CHK_08
+        bne OUT
         jmp BEEP
-CHK_08: cmp #$08        ; backspace
-        bne CHK_0D
-        jmp COUT_BS
-CHK_0D: cmp #$0D        ; carriage return
-        bne RET
-        jmp COUT_CR
-RET:    rts
-.endproc
-
-.proc COUT_BS
-        phy
-        lda #$00                ; clear cursor moving pointer
-        ldy #$00
-        sta (SCREEN_PTR), Y
-        sec
-        lda SCREEN_PTR
-        sbc #1
-        bcs RET
-        dec SCREEN_PTR + 1
-RET:
-        sta SCREEN_PTR
-        ply
-        rts
-.endproc
-
-.proc COUT_CR
-        phy
-        lda #$00                ; clear cursor moving pointer
-        ldy #$00
-        sta (SCREEN_PTR), Y
-        lda SCREEN_PTR
-        clc
-        adc #$20                ; increment pointer one line
-        bcc RET                 ; if carry clear, still in same page
-        inc SCREEN_PTR + 1      ; else, increase high byte of pointer
-RET:
-        and #$E0                ; set low byte to beginning of line
-        sta SCREEN_PTR
-        ply
-        jmp CHECK_SCROLL
-.endproc
-
-.proc CHECK_SCROLL
-        lda SCREEN_PTR + 1
-        cmp #>SCREEN_END
-        bcc RET
-        jsr SCROLL
-RET:
-        rts
-.endproc
-
-.proc SCROLL
-        pha                 ; push A and Y to stack
-        phy
-        lda SCREEN_PTR      ; push SCREEN_PTR to stack
-        pha
-        lda SCREEN_PTR + 1
-        pha
-        lda #<VRAM_START    ; reset low byte of screen pointer to top of screen
-        sta SCREEN_PTR
-        clc
-        adc #$20            ; set low byte of scroll pointer one line lower
-        sta SCROLL_PTR
-        lda #>VRAM_START    ; set high byte of both pointers to top of screen
-        sta SCREEN_PTR + 1
-        sta SCROLL_PTR + 1
-        ldy #$00
-LOOP:
-        lda (SCROLL_PTR), Y ; load byte at scroll pointer + Y
-        sta (SCREEN_PTR), Y ; store in screen pointer + Y
-        iny                 ; increment Y
-        bne LOOP
-        inc SCREEN_PTR + 1  ; increment high bytes if paged
-        inc SCROLL_PTR + 1
-        lda SCREEN_PTR + 1    
-        cmp #>SCREEN_END    ; if SCREEN_PTR is not past the end of the screen,
-        bne LOOP            ; keep going
-
-        jsr VRAM_CLEAR      ; clear the rest of VRAM
-
-        pla                 ; pull original screen pointer from stack
-        sta SCREEN_PTR + 1
-        pla
-        sta SCREEN_PTR
-        sec
-        sbc #$20            ; subtract #$20 from screen pointer (one line)
-        sta SCREEN_PTR
-        bcs RET             
-        dec SCREEN_PTR + 1  ; carry to high byte if needed
-RET:
-        ply                 ; pull Y register from stack
-        pla                 ; pull A register from stack
-        rts                 ; return
+OUT:    jmp VIDEO_SEND_BYTE
 .endproc

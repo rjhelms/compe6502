@@ -20,6 +20,6 @@ USR             = GORESTART ; I don't know what this means
 SYS             = MON_WARMRESET
 HOME            = VRAM_CLEAR_FULL
 
-WIDTH           = 32
+WIDTH           = 40
 WIDTH2          = 24
 
