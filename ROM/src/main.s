@@ -177,15 +177,15 @@ DO_BRK:                 ; else, call BRK soft vector
 .endproc
 
 .segment "RODATA"
-MSG_VRAM_OK:    .byte "VRAM OK", $0D, $00
+MSG_VRAM_OK:    .byte "VRAM OK", $0A, $00
 MSG_MEM_TEST:   .byte "RAM TEST ", $00
 MSG_MEM_ROM_VER:
                 .byte "ROM CHECKSUM ", $00
 MSG_WELCOME:
-        .byte $0D
-        .byte $C9, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $BB, $0D
-        .byte $BA, " Comp", $82, "6502 ", $BA, $0D
-        .byte $C8, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $BC, $0D, $0D, 0
+        .byte $0A
+        .byte $C9, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $BB, $0A
+        .byte $BA, " Comp", $82, "6502 ", $BA, $0A
+        .byte $C8, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $BC, $0D, $0A, 0
 VEC_DATA:
         .addr BRK_DEFAULT       ; NMIVEC0
         .addr BRK_DEFAULT       ; BRKVEC0

@@ -49,7 +49,7 @@ ESCAPE:
         LDA #$DC        ;"\"
         JSR ECHO        ;Output it.
 GETLINE:
-        LDA #$8D        ;CR.
+        LDA #$8A        ; LF (rjh)
         JSR ECHO        ;Output it.
         LDA #$2A        ; asterisk
         JSR ECHO
