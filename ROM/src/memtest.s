@@ -57,6 +57,6 @@ DISP_ADDR:
 
 
 DONE:
-        lda #$0D
+        lda #$0A
         jmp COUT
 .endproc

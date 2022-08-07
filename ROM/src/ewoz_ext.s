@@ -34,7 +34,7 @@ PCH:    .res 1
 .export PRSTATUS
 
 .proc PRSTATUS
-        lda #$0D
+        lda #$0A
         jsr COUT
         jsr BEEP
         lda PCH
