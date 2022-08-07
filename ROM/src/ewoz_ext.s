@@ -46,7 +46,7 @@ PCH:    .res 1
         show_register YREG
         show_register SREG
         show_register PREG
-        lda #$0D
+        lda #$0A
         jmp COUT
 .endproc
 
