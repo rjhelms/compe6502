@@ -165,7 +165,7 @@ SETADR:
         BNE SETADR      ;Loop unless X = 0.
 NXTPRNT:
         BNE PRDATA      ;NE means no address to print.
-        LDA #$8D        ;CR.
+        LDA #$8A        ; LF (rjh)
         JSR ECHO        ;Output it.
         LDA XAMH        ;'Examine index' high-order byte.
         JSR PRBYTE      ;Output it in hex format.
@@ -216,14 +216,14 @@ ECHO:
 
 ; Load an program in Intel Hex Format.
 LOADINTEL:
-        LDA #$0D
+        LDA #$0A
         JSR ECHO      ;New line.
         LDA #<MSG_HEX_START
         STA MSGL
         LDA #>MSG_HEX_START
         STA MSGH
         JSR SHWMSG      ;Show Start Transfer.
-        LDA #$0D
+        LDA #$0A
         JSR ECHO      ;New line.
         LDY #$00
         STY CRCCHECK   ;If CRCCHECK=0, all is good.
@@ -292,26 +292,26 @@ TESTCOUNT:
 INTELDONE:
         LDA CRCCHECK   ; Test if everything is OK.
         BEQ OKMESS      ; Show OK message.
-        LDA #$0D
+        LDA #$0A
         JSR ECHO      ;New line.
         LDA #<MSG_HEX_FAIL      ; Load Error Message
         STA MSGL
         LDA #>MSG_HEX_FAIL
         STA MSGH
         JSR SHWMSG      ;Show Error.
-        LDA #$0D
+        LDA #$0A
         JSR ECHO      ;New line.
         RTS
 
 OKMESS:
-        LDA #$0D
+        LDA #$0A
         JSR ECHO      ;New line.
         LDA #<MSG_HEX_OK      ;Load OK Message.
         STA MSGL
         LDA #>MSG_HEX_OK
         STA MSGH
         JSR SHWMSG      ;Show Done.
-        LDA #$0D
+        LDA #$0A
         JSR ECHO      ;New line.
         RTS
 
