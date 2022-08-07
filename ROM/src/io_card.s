@@ -117,7 +117,7 @@ BYTE_AVAIL:
 ; uses STL/STH for start/current address, L/H for end address
 
 .proc   CLOAD
-        lda     #$0D
+        lda     #$0A
         jsr     COUT
         lda     #<MSG_PRESS_PLAY        ; display press play message
         sta     MSGL
@@ -218,7 +218,7 @@ header_end:
         lda     #>LOAD_PAGE
         sta     MSGH
         jsr     SHWMSG
-        lda     #$0D
+        lda     #$0A
         jsr     COUT
         lda     STH                     ; start address
         jsr     PRBYTE
@@ -230,7 +230,7 @@ header_end:
         jsr     PRBYTE
         lda     L
         jsr     PRBYTE
-        lda     #$0D
+        lda     #$0A
         jsr     COUT
         ldy     #$00
         sty     CRC
@@ -292,7 +292,7 @@ end:
         lda     IO_VIA_PORTB            ; ensure TX is high
         ora     #IO_MASK_CAS_TX
         sta     IO_VIA_PORTB
-        lda     #$0D
+        lda     #$0A
         jsr     COUT
         lda     #<MSG_PRESS_RECORD      ; display press record message
         sta     MSGL
@@ -531,14 +531,14 @@ done:
 
 .SEGMENT "RODATA"
 MSG_PRESS_PLAY:
-        .byte "Press play on cassette.", $0D, $00
+        .byte "Press play on cassette.", $0A, $00
 MSG_PRESS_RECORD:
-        .byte "Press record on cassette", $0D, "and hit enter.", $0D, $00
+        .byte "Press record on cassette", $0A, "and hit enter.", $0A, $00
 MSG_HEADER_FOUND:
         .byte "Loading ", $00
 MSG_CHECKSUM_OK:
-        .byte "Checksum OK", $0D, $00
+        .byte "Checksum OK", $0A, $00
 MSG_CHECKSUM_FAIL:
-        .byte "Checksum fail", $0D, $00
+        .byte "Checksum fail", $0A, $00
 MSG_SAVE_COMPLETE:
-        .byte "Save complete", $0D, $00
+        .byte "Save complete", $0A, $00
