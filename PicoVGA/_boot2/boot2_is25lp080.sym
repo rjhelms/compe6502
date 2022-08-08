@@ -1,0 +1,10 @@
+20041f00 T _stage2_boot
+20041f0c t program_sregs
+20041f46 t skip_sreg_programming
+20041f4a t dummy_read
+20041f6c t configure_ssi
+20041f76 t check_return
+20041f7e t vector_into_flash
+20041f8c t wait_ssi_ready
+20041f9e T read_flash_sreg
+20041fae T literals

@@ -1,0 +1,2 @@
+   text	   data	    bss	    dec	    hex	filename
+    240	      0	      0	    240	     f0	build/boot2_w25q080.elf

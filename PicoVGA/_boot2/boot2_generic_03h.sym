@@ -1,0 +1,4 @@
+20041f00 T _stage2_boot
+20041f1e t check_return
+20041f26 t vector_into_flash
+20041f34 T literals
