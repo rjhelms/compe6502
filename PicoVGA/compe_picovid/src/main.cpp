@@ -25,6 +25,9 @@
 #define TEXT_BOTTOM_4_HEIGHT (8 * 4)
 #define TEXT_OFFSET_BOTTOM_4 (80 * 20)
 
+#define CURSOR_XOR_MASK 0b10000000
+#define CURSOR_BLINK_MS 250
+
 u8 bg;
 u8 fg;
 
@@ -61,6 +64,22 @@ u8 *grPtr;
 
 u8 pal16[16];
 
+bool cursorEnabled = true;
+bool cursorState = false;
+absolute_time_t cursorNextBlink;
+
+int GetTextBufOffset(int X, int Y)
+{
+	if (PrintBufWB < PrintBufW * 2)
+	{
+		return X + (Y * PrintBufWB);
+	}
+	else
+	{
+		return (X * 2) + (Y * PrintBufWB);
+	}
+}
+
 void PrintChar0Wrap(char ch)
 {
 	PrintChar0(ch);
@@ -74,6 +93,11 @@ void PrintChar0Wrap(char ch)
 // print character, using control characters CR, LF, TAB
 void PrintCharCompe(char ch)
 {
+	// if cursor highlight is active, unhighlight current character first
+	if (cursorState)
+	{
+		textBuf[GetTextBufOffset(PrintX, PrintY)] ^= CURSOR_XOR_MASK;
+	}
 
 	// BS
 	if (ch == 0x08) // backspace
@@ -104,10 +128,20 @@ void PrintCharCompe(char ch)
 	// character
 	else
 		PrintChar0Wrap(ch);
+
+	// if cursor highlight is active, highlight new position
+	if (cursorState)
+	{
+		textBuf[GetTextBufOffset(PrintX, PrintY)] ^= CURSOR_XOR_MASK;
+	}
 }
 
 void text_scroll()
 {
+	if (cursorState)
+	{
+		textBuf[GetTextBufOffset(PrintX, PrintY)] ^= CURSOR_XOR_MASK;
+	}
 	for (int i = 0; i < (80 * 23); i++)
 	{
 		// for the first 23 lines of textBuf, copy the next line
@@ -130,6 +164,10 @@ void text_scroll()
 	}
 
 	PrintAddPos(0, -1); // move cursor up one
+	if (cursorState)
+	{
+		textBuf[GetTextBufOffset(PrintX, PrintY)] ^= CURSOR_XOR_MASK;
+	}
 }
 
 void check_text_scroll()
@@ -319,7 +357,7 @@ void set_mode_gr4()
 	dispMode = GR4BPP;
 }
 
-void set_mode_gr1_text()
+void set_mode_gr1()
 {
 	configure_vid(VID_WIDTH_HI, VID_WFULL_HI);
 	ScreenClear(pScreen);
@@ -453,9 +491,17 @@ int main()
 	init_gpio();
 
 	reset_display();
+	cursorNextBlink = make_timeout_time_ms(CURSOR_BLINK_MS);
 
 	while (true)
 	{
+		if (absolute_time_diff_us(get_absolute_time(), cursorNextBlink) < 0)
+		{
+			cursorNextBlink = make_timeout_time_ms(CURSOR_BLINK_MS);
+			cursorState = !cursorState;
+			textBuf[GetTextBufOffset(PrintX, PrintY)] ^= CURSOR_XOR_MASK;
+		}
+
 		if (gpio_get(PIN_EF)) // EF goes high when FIFO has content
 		{
 			last_byte = read_byte();
@@ -529,8 +575,8 @@ int main()
 					state = CMD_DD_MOVE_Y_REL;
 					break;
 
-				// TODO: add DE and 
-				
+					// TODO: add DE and
+
 				case 0xE0: // set foreground color
 					state = CMD_E0_SET_FG;
 					break;
@@ -581,6 +627,8 @@ int main()
 					{
 						PrintClear();
 						PrintHome();
+						cursorNextBlink = make_timeout_time_ms(CURSOR_BLINK_MS);
+						cursorState = false;
 					}
 					if (dispMode >= GR4BPP_TEXT)
 					{
