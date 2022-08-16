@@ -2,25 +2,25 @@
 #define _COMPE_H
 
 /* Color defines */
-#define COLOR_BLACK         0x00
-#define COLOR_BLUE          0x01
-#define COLOR_GREEN         0x02
-#define COLOR_CYAN          0x03
-#define COLOR_RED           0x04
-#define COLOR_MAGENTA       0x05
-#define COLOR_BROWN         0x06
-#define COLOR_LIGHTGRAY     0x07
-#define COLOR_DARKGRAY      0x08
-#define COLOR_LIGHTBLUE     0x09
-#define COLOR_LIGHTGREEN    0x10
-#define COLOR_LIGHTCYAN     0x11
-#define COLOR_LIGHTRED      0x12
-#define COLOR_LIGHTMAGENTA  0x13
-#define COLOR_YELLOW        0x14
-#define COLOR_WHITE         0x15
+#define COLOR_BLACK         0
+#define COLOR_BLUE          1
+#define COLOR_GREEN         2
+#define COLOR_CYAN          3
+#define COLOR_RED           4
+#define COLOR_MAGENTA       5
+#define COLOR_BROWN         6
+#define COLOR_LIGHTGRAY     7
+#define COLOR_DARKGRAY      8
+#define COLOR_LIGHTBLUE     9
+#define COLOR_LIGHTGREEN    10
+#define COLOR_LIGHTCYAN     11
+#define COLOR_LIGHTRED      12
+#define COLOR_LIGHTMAGENTA  13
+#define COLOR_YELLOW        14
+#define COLOR_WHITE         15
 
 unsigned char get_video_byte (void);
-
+void B_BEEP(void);
 
 #define _bordercolor(color)     COLOR_BLACK
 #define _cpeekrevers()          0

@@ -37,7 +37,9 @@ _init:
         jsr initlib
 
 ; setup video for conio
-        lda #$03        ; exit text pode
+        lda #$0A        ; put out a single new line
+        sta VIDEO_DATA
+        lda #$03        ; exit text mode
         sta VIDEO_DATA
         lda #$F8        ; disable cursor
         sta VIDEO_DATA
