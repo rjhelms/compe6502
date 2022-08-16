@@ -111,14 +111,14 @@ void PrintChar0NoAdv(char ch)
 {
 	if (((u32)PrintX < (u32)PrintBufW) && ((u32)PrintY < (u32)PrintBufH))
 	{
-		if ((PrintBufWB < 2*PrintBufW))
+		if ((PrintBufWB < 2 * PrintBufW))
 		{
-			u8* d = &PrintBuf[PrintX + PrintY*PrintBufWB];
+			u8 *d = &PrintBuf[PrintX + PrintY * PrintBufWB];
 			*d = ch;
 		}
 		else
 		{
-			u8* d = &PrintBuf[PrintX*2 + PrintY*PrintBufWB];
+			u8 *d = &PrintBuf[PrintX * 2 + PrintY * PrintBufWB];
 			*d++ = ch;
 			*d = PrintCol;
 		}
@@ -219,7 +219,7 @@ void check_text_scroll()
 	return;
 }
 
-void reset_palette()
+void cmd_ef_reset_palette()
 {
 	memcpy(pal16, DefPal16, 16);
 	GenPal16Trans(Pal16Trans, pal16);
@@ -282,7 +282,7 @@ void configure_vid(u16 width, u16 wfull)
 	VgaInitReq(&Vmode);
 }
 
-void set_mode_text40()
+void cmd_f0_set_mode_text40()
 {
 	configure_vid(VID_WIDTH_LO, VID_WFULL_LO);
 	ScreenClear(pScreen);
@@ -294,7 +294,7 @@ void set_mode_text40()
 	dispMode = TEXT40;
 }
 
-void set_mode_text80()
+void cmd_f1_set_mode_text80()
 {
 	configure_vid(VID_WIDTH_HI, VID_WFULL_HI);
 	ScreenClear(pScreen);
@@ -305,7 +305,7 @@ void set_mode_text80()
 	dispMode = TEXT80;
 }
 
-void set_mode_gr4_text()
+void cmd_f2_set_mode_gr4_text()
 {
 	configure_vid(VID_WIDTH_LO, VID_WFULL_LO);
 	ScreenClear(pScreen);
@@ -329,7 +329,7 @@ void set_mode_gr4_text()
 	dispMode = GR4BPP_TEXT;
 }
 
-void set_mode_gr1_text()
+void cmd_f3_set_mode_gr1_text()
 {
 	configure_vid(VID_WIDTH_HI, VID_WFULL_HI);
 	ScreenClear(pScreen);
@@ -352,7 +352,7 @@ void set_mode_gr1_text()
 	dispMode = GR1BPP_TEXT;
 }
 
-void set_mode_gr8()
+void cmd_f4_set_mode_gr8()
 {
 	configure_vid(VID_WIDTH_XS, VID_WFULL_XS);
 	ScreenClear(pScreen);
@@ -370,7 +370,7 @@ void set_mode_gr8()
 	dispMode = GR8BPP;
 }
 
-void set_mode_gr4()
+void cmd_f6_set_mode_gr4()
 {
 	configure_vid(VID_WIDTH_LO, VID_WFULL_LO);
 	ScreenClear(pScreen);
@@ -388,7 +388,7 @@ void set_mode_gr4()
 	dispMode = GR4BPP;
 }
 
-void set_mode_gr1()
+void cmd_f7_set_mode_gr1()
 {
 	configure_vid(VID_WIDTH_HI, VID_WFULL_HI);
 	ScreenClear(pScreen);
@@ -435,16 +435,16 @@ void init_gpio()
 	stdio_init_all();
 }
 
-void reset_display()
+void cmd_ff_reset_display()
 {
-	set_mode_text40();
+	cmd_f0_set_mode_text40();
 	bg = PC_BLACK;
 	fg = PC_WHITE;
 	PrintSetCol(PC_COLOR(bg, fg));
 	PrintClear();
 	PrintHome();
 	dispMode = TEXT40;
-	reset_palette();
+	cmd_ef_reset_palette();
 	cursorEnabled = true;
 	cursorState = false;
 	cursorNextBlink = make_timeout_time_ms(CURSOR_BLINK_MS);
@@ -470,7 +470,7 @@ void write_byte(u8 val)
 
 	for (int i = 0; i < 8; i++)
 	{
-		gpio_put(PIN_DATA_FIRST + i, val & 1<<i);
+		gpio_put(PIN_DATA_FIRST + i, val & 1 << i);
 	}
 
 	gpio_put(PIN_OE, true);
@@ -545,7 +545,7 @@ void cmd_e2_set_all_text_fg()
 	{
 		return;
 	}
-	for (int i = 1; i < (80 * 24); i+=2)
+	for (int i = 1; i < (80 * 24); i += 2)
 	{
 		textBuf[i] = (textBuf[i] & 0xF0) + fg;
 	}
@@ -553,9 +553,9 @@ void cmd_e2_set_all_text_fg()
 
 void cmd_e3_set_all_text_bg()
 {
-	for (int i = 1; i < (80 * 24); i+=2)
+	for (int i = 1; i < (80 * 24); i += 2)
 	{
-		textBuf[i] = (textBuf[i] & 0x0F) + (bg<<4);
+		textBuf[i] = (textBuf[i] & 0x0F) + (bg << 4);
 	}
 }
 
@@ -579,7 +579,7 @@ int main()
 
 	init_gpio();
 
-	reset_display();
+	cmd_ff_reset_display();
 
 	while (true)
 	{
@@ -690,10 +690,10 @@ int main()
 					break;
 				case 0xDA: // get X size
 					write_single_byte((u8)PrintBufW);
-					break;	
+					break;
 				case 0xDB: // get Y size
 					write_single_byte((u8)PrintBufH);
-					break;	
+					break;
 				case 0xDC: // move X relative
 					state = CMD_DC_MOVE_X_REL;
 					break;
@@ -718,11 +718,25 @@ int main()
 				case 0xE3: // set all text to bg
 					cmd_e3_set_all_text_bg();
 					break;
-				case 0xE4: // get current fg
-					write_single_byte(fg);
+				case 0xE4: // get current fg - returns 15 in mono modes
+					if (dispMode == TEXT80 || dispMode == GR1BPP_TEXT)
+					{
+						write_single_byte(0x0F);
+					}
+					else
+					{
+						write_single_byte(fg);
+					}
 					break;
-				case 0xE5: // get current bg
-					write_single_byte(bg);
+				case 0xE5: // get current bg - returns 0 in mono modes
+					if (dispMode == TEXT80 || dispMode == GR1BPP_TEXT)
+					{
+						write_single_byte(0x00);
+					}
+					else
+					{
+						write_single_byte(bg);
+					}
 					break;
 				case 0xE8: // rotate palette forward
 					rotate_palette_forward_full();
@@ -740,28 +754,28 @@ int main()
 					cmd_ee_load_palette();
 					break;
 				case 0xEF: // reset palette
-					reset_palette();
+					cmd_ef_reset_palette();
 					break;
 				case 0xF0: // set 40 col text mode
-					set_mode_text40();
+					cmd_f0_set_mode_text40();
 					break;
 				case 0xF1: // set 80 col text mode
-					set_mode_text80();
+					cmd_f1_set_mode_text80();
 					break;
 				case 0xF2: // set 4bpp with text mode
-					set_mode_gr4_text();
+					cmd_f2_set_mode_gr4_text();
 					break;
 				case 0xF3: // set 1bpp with text mode
-					set_mode_gr1_text();
+					cmd_f3_set_mode_gr1_text();
 					break;
 				case 0xF4: // set 8bpp mode
-					set_mode_gr8();
+					cmd_f4_set_mode_gr8();
 					break;
 				case 0xF6: // set 4bpp mode
-					set_mode_gr4();
+					cmd_f6_set_mode_gr4();
 					break;
 				case 0xF7: // set 1bpp mode
-					set_mode_gr1();
+					cmd_f7_set_mode_gr1();
 					break;
 				case 0xF8:				  // disable cursor
 					FlipCursorIfActive(); // turn off if currently displayed
@@ -785,10 +799,9 @@ int main()
 					{
 						DrawClear(&Canvas);
 					}
-					// TODO - reset for graphics modes
 					break;
 				case 0xFF:
-					reset_display();
+					cmd_ff_reset_display();
 				default:
 					break;
 				}
