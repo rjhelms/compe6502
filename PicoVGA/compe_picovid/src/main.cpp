@@ -68,15 +68,31 @@ bool cursorEnabled = true;
 bool cursorState = false;
 absolute_time_t cursorNextBlink;
 
+// converts an X / Y position into a pointer offset
 int GetTextBufOffset(int X, int Y)
 {
-	if (PrintBufWB < PrintBufW * 2)
+	int offset = X + (Y * PrintBufWB);	// offset common to all modes
+
+	if (dispMode == GR4BPP_TEXT || dispMode == GR1BPP_TEXT)
 	{
-		return X + (Y * PrintBufWB);
+		// if in a graphics mode, Y coords are 20 lines down
+		offset += TEXT_OFFSET_BOTTOM_4;
 	}
-	else
+
+	if (PrintBufWB >= PrintBufW * 2)
 	{
-		return (X * 2) + (Y * PrintBufWB);
+		// in color modes, need to double X offset
+		offset += X;
+	}
+
+	return offset;
+}
+
+void FlipCursorIfActive()
+{
+	if (cursorEnabled && cursorState)
+	{
+		textBuf[GetTextBufOffset(PrintX, PrintY)] ^= CURSOR_XOR_MASK;
 	}
 }
 
@@ -93,11 +109,7 @@ void PrintChar0Wrap(char ch)
 // print character, using control characters CR, LF, TAB
 void PrintCharCompe(char ch)
 {
-	// if cursor highlight is active, unhighlight current character first
-	if (cursorState)
-	{
-		textBuf[GetTextBufOffset(PrintX, PrintY)] ^= CURSOR_XOR_MASK;
-	}
+	FlipCursorIfActive();
 
 	// BS
 	if (ch == 0x08) // backspace
@@ -129,19 +141,12 @@ void PrintCharCompe(char ch)
 	else
 		PrintChar0Wrap(ch);
 
-	// if cursor highlight is active, highlight new position
-	if (cursorState)
-	{
-		textBuf[GetTextBufOffset(PrintX, PrintY)] ^= CURSOR_XOR_MASK;
-	}
+	FlipCursorIfActive();
 }
 
 void text_scroll()
 {
-	if (cursorState)
-	{
-		textBuf[GetTextBufOffset(PrintX, PrintY)] ^= CURSOR_XOR_MASK;
-	}
+	FlipCursorIfActive();
 	for (int i = 0; i < (80 * 23); i++)
 	{
 		// for the first 23 lines of textBuf, copy the next line
@@ -164,10 +169,7 @@ void text_scroll()
 	}
 
 	PrintAddPos(0, -1); // move cursor up one
-	if (cursorState)
-	{
-		textBuf[GetTextBufOffset(PrintX, PrintY)] ^= CURSOR_XOR_MASK;
-	}
+	FlipCursorIfActive();
 }
 
 void check_text_scroll()
@@ -527,17 +529,37 @@ int main()
 				break;
 
 			case CMD_D0_WRITE_CHAR:
+				FlipCursorIfActive();
 				PrintChar0(last_byte);
+				FlipCursorIfActive();
 				state = DEFAULT;
 				break;
 
 			case CMD_DC_MOVE_X_REL:
+				FlipCursorIfActive();
 				PrintAddPos((s8)last_byte, 0);
+				FlipCursorIfActive();
 				state = DEFAULT;
 				break;
 
 			case CMD_DD_MOVE_Y_REL:
+				FlipCursorIfActive();
 				PrintAddPos(0, (s8)last_byte);
+				FlipCursorIfActive();
+				state = DEFAULT;
+				break;
+
+			case CMD_DE_MOVE_X_ABS:
+				FlipCursorIfActive();
+				PrintSetPos((s8)last_byte, PrintY);
+				FlipCursorIfActive();
+				state = DEFAULT;
+				break;
+			
+			case CMD_DF_MOVE_Y_ABS:
+				FlipCursorIfActive();
+				PrintSetPos(PrintX, (s8)last_byte);
+				FlipCursorIfActive();
 				state = DEFAULT;
 				break;
 
@@ -574,9 +596,12 @@ int main()
 				case 0xDD: // move Y relative
 					state = CMD_DD_MOVE_Y_REL;
 					break;
-
-					// TODO: add DE and
-
+				case 0xDE: // move X absolute
+					state = CMD_DE_MOVE_X_ABS;
+					break;
+				case 0xDF: // move Y absolute
+					state = CMD_DF_MOVE_Y_ABS;
+					break;
 				case 0xE0: // set foreground color
 					state = CMD_E0_SET_FG;
 					break;
