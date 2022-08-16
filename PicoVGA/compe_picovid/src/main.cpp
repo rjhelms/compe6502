@@ -479,6 +479,12 @@ void write_byte(u8 val)
 	gpio_put(PIN_OE, false);
 }
 
+void write_single_byte(u8 val)
+{
+	set_direction(true);
+	write_byte(val);
+	set_direction(false);
+}
 u8 read_byte()
 {
 	u8 val = 0;
@@ -530,6 +536,26 @@ void cmd_c8_blit_bytestream()
 			grPtr++;
 		}
 		grPtr += (Canvas.wb - w);
+	}
+}
+
+void cmd_e2_set_all_text_fg()
+{
+	if (dispMode != TEXT40 && dispMode != GR4BPP_TEXT)
+	{
+		return;
+	}
+	for (int i = 1; i < (80 * 24); i+=2)
+	{
+		textBuf[i] = (textBuf[i] & 0xF0) + fg;
+	}
+}
+
+void cmd_e3_set_all_text_bg()
+{
+	for (int i = 1; i < (80 * 24); i+=2)
+	{
+		textBuf[i] = (textBuf[i] & 0x0F) + (bg<<4);
 	}
 }
 
@@ -624,13 +650,13 @@ int main()
 				break;
 
 			case CMD_E0_SET_FG:
-				fg = last_byte;
+				fg = last_byte & 0x0F;
 				PrintSetCol(PC_COLOR(bg, fg));
 				state = DEFAULT;
 				break;
 
 			case CMD_E1_SET_BG:
-				bg = last_byte;
+				bg = last_byte & 0x0F;
 				PrintSetCol(PC_COLOR(bg, fg));
 				state = DEFAULT;
 				break;
@@ -651,32 +677,22 @@ int main()
 					state = CMD_D0_WRITE_CHAR;
 					break;
 				case 0xD1: // get byte at current position
-					set_direction(true);
-					write_byte((u8)textBuf[GetTextBufOffset(PrintX, PrintY)]);
-					set_direction(false);
+					write_single_byte((u8)textBuf[GetTextBufOffset(PrintX, PrintY)]);
 					break;
 				case 0xD6: // advance cursor one position w/ wrap
 					TextAdvanceWrap();
 					break;
 				case 0xD8: // get X position
-					set_direction(true);
-					write_byte((u8)PrintX);
-					set_direction(false);
+					write_single_byte((u8)PrintX);
 					break;
 				case 0xD9: // get Y position
-					set_direction(true);
-					write_byte((u8)PrintY);
-					set_direction(false);
+					write_single_byte((u8)PrintY);
 					break;
 				case 0xDA: // get X size
-					set_direction(true);
-					write_byte((u8)PrintBufW);
-					set_direction(false);
+					write_single_byte((u8)PrintBufW);
 					break;	
 				case 0xDB: // get Y size
-					set_direction(true);
-					write_byte((u8)PrintBufH);
-					set_direction(false);
+					write_single_byte((u8)PrintBufH);
 					break;	
 				case 0xDC: // move X relative
 					state = CMD_DC_MOVE_X_REL;
@@ -695,6 +711,18 @@ int main()
 					break;
 				case 0xE1: // set background color
 					state = CMD_E1_SET_BG;
+					break;
+				case 0xE2: // set all text to fg
+					cmd_e2_set_all_text_fg();
+					break;
+				case 0xE3: // set all text to bg
+					cmd_e3_set_all_text_bg();
+					break;
+				case 0xE4: // get current fg
+					write_single_byte(fg);
+					break;
+				case 0xE5: // get current bg
+					write_single_byte(bg);
 					break;
 				case 0xE8: // rotate palette forward
 					rotate_palette_forward_full();
