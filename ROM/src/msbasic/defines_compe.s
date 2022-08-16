@@ -11,13 +11,14 @@ RAMSTART2       := $0600
 STACK_TOP       := $FE
 SPACE_FOR_GOSUB := $36
 
-.import COUT, KEY_READ, KEY_GET, MON_WARMRESET, VRAM_CLEAR_FULL, CLOAD, CSAVE
+.import COUT, KEY_READ, KEY_GET, MON_COLDRESET, VRAM_CLEAR_FULL, CLOAD, CSAVE
+.import WARMRESET
 
 .include "../asminc/zeropage.inc"
 
 MONCOUT         = COUT
 USR             = GORESTART ; I don't know what this means
-SYS             = MON_WARMRESET
+SYS             = MON_COLDRESET
 HOME            = VRAM_CLEAR_FULL
 
 WIDTH           = 40

@@ -20,6 +20,12 @@ PR_WRITTEN_BY:
   .endif
 .endif
 COLD_START:
+.ifdef COMPE
+      lda #<BASIC_WARM
+      sta WARMRESET
+      lda #>BASIC_WARM
+      sta WARMRESET+1
+.endif
 .ifdef SYM1
         jsr     ACCESS
 .endif

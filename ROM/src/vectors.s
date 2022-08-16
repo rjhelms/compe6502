@@ -1,5 +1,5 @@
 
-.export NMIVEC0, BRKVEC0, IRQVEC0, NMIRET0, BRKRET0, IRQRET0, PWR_UP
+.export NMIVEC0, BRKVEC0, IRQVEC0, NMIRET0, BRKRET0, IRQRET0, WARMRESET, PWR_UP
 .export VECT_TAB_START, VECT_TAB_END
 
 .import NMI_VECTOR, B_COLDSTART, IRQ_VECTOR
@@ -12,7 +12,7 @@
         NMIRET0:        .res 2
         BRKRET0:        .res 2
         IRQRET0:        .res 2
-
+        WARMRESET:      .res 2
         PWR_UP:         .res 1
         VECT_TAB_END:
 

@@ -52,6 +52,6 @@ $(TEMP):
 	mkdir $(TEMP)
 
 clean:
-	rm -rf $(OBJ)
-	rm -rf $(BIN)
-	rm -rf $(TEMP)
+	rm -rf $(OBJ)/*
+	rm -rf $(BIN)/*
+	rm -rf $(TEMP)/*

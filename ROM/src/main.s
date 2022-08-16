@@ -10,6 +10,7 @@ CHK_BYTE = <ROM_VER ^ >ROM_VER
 .importzp       COUNTER, CRC, CRCCHECK
 
 .import         NMIVEC0, BRKVEC0, IRQVEC0, BRKRET0, IRQRET0, PWR_UP
+.import         WARMRESET
 .import         VECT_TAB_START, VECT_TAB_END
 
 .import         PRSTATUS
@@ -80,7 +81,7 @@ jumptable       B_Reserve30,            RESERVE
         lda PWR_UP      ; check power up byte
         cmp #CHK_BYTE
         bne :+
-        jmp BASIC_WARM          ; if set, go to warm reset
+        jmp (WARMRESET)         ; if set, go to warm reset
                                 ; otherwise, continue with startup
 :       jsr VRAM_TEST
         jsr VRAM_CLEAR_FULL
@@ -190,7 +191,8 @@ VEC_DATA:
         .addr BRK_DEFAULT       ; NMIVEC0
         .addr BRK_DEFAULT       ; BRKVEC0
         .addr IRQ_DEFAULT       ; IRQVEC0
-        .addr MON_WARMRESET     ; NMIRET0
-        .addr MON_WARMRESET     ; BRKRET0
+        .addr MON_COLDRESET     ; NMIRET0
+        .addr MON_COLDRESET     ; BRKRET0
         .addr IRQ_RETURN        ; IRQRET0
+        .addr MON_WARMRESET     ; WARMRESET
         .byte CHK_BYTE          ; PWR_UP
