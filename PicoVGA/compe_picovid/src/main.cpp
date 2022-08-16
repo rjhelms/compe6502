@@ -421,6 +421,35 @@ void reset_display()
 	cursorNextBlink = make_timeout_time_ms(CURSOR_BLINK_MS);
 }
 
+// set GPIO direction - false for read, true for write
+void set_direction(bool direction)
+{
+	for (int i = 0; i < 8; i++)
+	{
+		gpio_set_dir(PIN_DATA_FIRST + i, direction);
+	}
+}
+
+void write_byte(u8 val)
+{
+	// spin until buffer is not full
+	while (!gpio_get(PIN_FF))
+	{
+	}
+
+	gpio_put(PIN_WRITE, false);
+
+	for (int i = 0; i < 8; i++)
+	{
+		gpio_put(PIN_DATA_FIRST + i, val & 1<<i);
+	}
+
+	gpio_put(PIN_OE, true);
+	sleep_us(1);
+	gpio_put(PIN_WRITE, true);
+	gpio_put(PIN_OE, false);
+}
+
 u8 read_byte()
 {
 	u8 val = 0;
@@ -592,6 +621,26 @@ int main()
 				case 0xD0: // write single text char
 					state = CMD_D0_WRITE_CHAR;
 					break;
+				case 0xD8: // get X position
+					set_direction(true);
+					write_byte((u8)PrintX);
+					set_direction(false);
+					break;
+				case 0xD9: // get Y position
+					set_direction(true);
+					write_byte((u8)PrintY);
+					set_direction(false);
+					break;
+				case 0xDA: // get X size
+					set_direction(true);
+					write_byte((u8)PrintBufW);
+					set_direction(false);
+					break;	
+				case 0xDB: // get Y size
+					set_direction(true);
+					write_byte((u8)PrintBufH);
+					set_direction(false);
+					break;	
 				case 0xDC: // move X relative
 					state = CMD_DC_MOVE_X_REL;
 					break;
