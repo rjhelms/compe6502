@@ -51,6 +51,8 @@ void build_word_ptr()
 
 void welcome()
 {
+    textcolor(COLOR_YELLOW);
+    bgcolor(COLOR_BLUE);
     clrscr();
     cputs("\r\nHANGMAN\r\n\n");
     cputs("2021-2022 Rob Hailman\r\n\n");
@@ -115,6 +117,8 @@ void draw_hangman()
 void draw_screen()
 {
     unsigned char i = 0;
+    bgcolor(COLOR_BLACK);
+    textcolor(COLOR_WHITE);
     clrscr();
     draw_hangman();
 
@@ -194,10 +198,12 @@ void end_screen()
     draw_hangman();
     if (game_won)
     {
+        bgcolor(COLOR_GREEN);
         cputs("You won!\r\n\n");
     }
     else
     {
+        bgcolor(COLOR_RED);
         cputs("Game over!\r\n\n");
     }
     cputs("The word was \r\n\n");
@@ -224,6 +230,7 @@ int play_game()
                 {
                     draw_screen();
                     cputs("You already guessed that!\r\n");
+                    B_BEEP();
                 }
                 else
                 {
@@ -234,6 +241,7 @@ int play_game()
             {
                 draw_screen();
                 cputs("Please enter a letter!\r\n");
+                B_BEEP();
             }
         }
 
@@ -261,5 +269,7 @@ int main()
     while (play_game())
     {
     }
+    bgcolor(COLOR_BLACK);
+    textcolor(COLOR_WHITE);
     return (0);
 }
