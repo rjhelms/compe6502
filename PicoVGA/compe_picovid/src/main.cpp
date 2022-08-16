@@ -71,7 +71,7 @@ absolute_time_t cursorNextBlink;
 // converts an X / Y position into a pointer offset
 int GetTextBufOffset(int X, int Y)
 {
-	int offset = X + (Y * PrintBufWB);	// offset common to all modes
+	int offset = X + (Y * PrintBufWB); // offset common to all modes
 
 	if (dispMode == GR4BPP_TEXT || dispMode == GR1BPP_TEXT)
 	{
@@ -416,6 +416,9 @@ void reset_display()
 	PrintHome();
 	dispMode = TEXT40;
 	reset_palette();
+	cursorEnabled = true;
+	cursorState = false;
+	cursorNextBlink = make_timeout_time_ms(CURSOR_BLINK_MS);
 }
 
 u8 read_byte()
@@ -493,11 +496,10 @@ int main()
 	init_gpio();
 
 	reset_display();
-	cursorNextBlink = make_timeout_time_ms(CURSOR_BLINK_MS);
 
 	while (true)
 	{
-		if (absolute_time_diff_us(get_absolute_time(), cursorNextBlink) < 0)
+		if (cursorEnabled && absolute_time_diff_us(get_absolute_time(), cursorNextBlink) < 0)
 		{
 			cursorNextBlink = make_timeout_time_ms(CURSOR_BLINK_MS);
 			cursorState = !cursorState;
@@ -555,7 +557,7 @@ int main()
 				FlipCursorIfActive();
 				state = DEFAULT;
 				break;
-			
+
 			case CMD_DF_MOVE_Y_ABS:
 				FlipCursorIfActive();
 				PrintSetPos(PrintX, (s8)last_byte);
@@ -644,8 +646,18 @@ int main()
 				case 0xF6: // set 4bpp mode
 					set_mode_gr4();
 					break;
-				case 0xF7:
+				case 0xF7: // set 1bpp mode
 					set_mode_gr1();
+					break;
+				case 0xF8:				  // disable cursor
+					FlipCursorIfActive(); // turn off if currently displayed
+					cursorEnabled = false;
+					break;
+				case 0xF9:				  // enable cursor
+					FlipCursorIfActive(); // turn off if currently displayed just in case it's already active
+					cursorNextBlink = make_timeout_time_ms(CURSOR_BLINK_MS);
+					cursorState = false;
+					cursorEnabled = true;
 					break;
 				case 0xFE: //
 					if (dispMode <= GR1BPP_TEXT)
