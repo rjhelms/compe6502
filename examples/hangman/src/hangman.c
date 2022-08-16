@@ -1,12 +1,8 @@
 #include <conio.h>
 #include <stdlib.h>
+#include <stdbool.h>
+#include <compe.h>
 #include "word_list.h"
-
-typedef enum
-{
-    false,
-    true
-} bool;
 
 const char hangman_top[] = " +---+\r\n |   ";
 const char hangman_bottom[] = "\r\n |\r\n-+----";

@@ -1,11 +1,11 @@
         .export _wherex
-
+        .import _get_video_byte
         .include "compe.inc"
 
 ; unsigned char wherex (void);
 
 _wherex:
-        ldx #$00
-        lda SCREEN_PTR
-        and #$1F
-        rts
+        lda #$D8
+        sta VIDEO_DATA
+        jmp _get_video_byte
+
