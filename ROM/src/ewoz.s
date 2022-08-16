@@ -10,7 +10,7 @@
 
 .include "asminc/zeropage.inc"
 
-.import CLOAD, COUT, KEY_GET
+.import CLOAD, COUT, KEY_GET, WARMRESET
 
 .export MON_COLDRESET, MON_WARMRESET, PRBYTE, SHWMSG
 
@@ -34,7 +34,10 @@ CRCCHECK:   .res 1
 
 .segment "MON"
 MON_COLDRESET:
-
+        lda #<MON_WARMRESET
+        sta WARMRESET
+        lda #>MON_WARMRESET
+        sta WARMRESET+1
 MON_WARMRESET: 
         LDA #$9B        ;* Auto escape.
 NOTCR:  
