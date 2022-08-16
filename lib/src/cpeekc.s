@@ -1,10 +1,10 @@
 ; char cpeekc (void);
 
         .export _cpeekc
-
+        .import _get_video_byte
         .include "compe.inc"
 
 _cpeekc:
-        ldx #$00
-        lda (SCREEN_PTR, X)
-        rts
+        lda #$D1
+        sta VIDEO_DATA
+        jmp _get_video_byte

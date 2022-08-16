@@ -13,7 +13,7 @@
         .import copydata, zerobss, initlib, donelib
 
         .include "zeropage.inc"
-
+        .include "compe.inc"
         .segment "STARTUP"
 
 _init:      
@@ -36,6 +36,14 @@ _init:
         jsr copydata
         jsr initlib
 
+; setup video for conio
+        lda #$0A        ; put out a single new line
+        sta VIDEO_DATA
+        lda #$03        ; exit text mode
+        sta VIDEO_DATA
+        lda #$F8        ; disable cursor
+        sta VIDEO_DATA
+
 ; call main()
         jsr _main
 
@@ -43,4 +51,8 @@ _init:
 ; return from subroutine (ie back to ewoz)
 
 _exit:  jsr donelib     ; run destructors
+        lda #$F9        ; enable cursor
+        sta VIDEO_DATA
+        lda #$02        ; return to text mode
+        sta VIDEO_DATA
         rts

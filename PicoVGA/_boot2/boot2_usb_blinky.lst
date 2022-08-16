@@ -1,0 +1,27 @@
+
+build/boot2_usb_blinky.elf:     file format elf32-littlearm
+
+
+Disassembly of section .text:
+
+20041f00 <_stage2_boot>:
+20041f00:	2714      	movs	r7, #20
+20041f02:	8838      	ldrh	r0, [r7, #0]
+20041f04:	88bf      	ldrh	r7, [r7, #4]
+20041f06:	4905      	ldr	r1, [pc, #20]	; (20041f1c <literals+0x2>)
+20041f08:	47b8      	blx	r7
+20041f0a:	2800      	cmp	r0, #0
+20041f0c:	d003      	beq.n	20041f16 <dead>
+20041f0e:	1c07      	adds	r7, r0, #0
+20041f10:	4803      	ldr	r0, [pc, #12]	; (20041f20 <literals+0x6>)
+20041f12:	2100      	movs	r1, #0
+20041f14:	47b8      	blx	r7
+
+20041f16 <dead>:
+20041f16:	bf30      	wfi
+20041f18:	e7fd      	b.n	20041f16 <dead>
+
+20041f1a <literals>:
+20041f1a:	0000      	.short	0x0000
+20041f1c:	00004255 	.word	0x00004255
+20041f20:	00000001 	.word	0x00000001

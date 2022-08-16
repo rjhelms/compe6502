@@ -1,6 +1,15 @@
         .export screensize
+        .import _get_video_byte
+        .include "compe.inc"
 
 screensize:
-        ldx #32
-        ldy #24
+        lda #$DA
+        sta VIDEO_DATA
+        jsr _get_video_byte
+        tax
+        
+        lda #$DB
+        sta VIDEO_DATA
+        jsr _get_video_byte
+        tay
         rts

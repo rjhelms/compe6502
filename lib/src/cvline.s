@@ -13,7 +13,7 @@ _cvlinexy:
 ; void __fastcall__ cvline (unsigned char length);
 
 _cvline:
-        ldx #$B3
+        ldx #$1A
         stx tmp1
         cmp #$00
         beq done

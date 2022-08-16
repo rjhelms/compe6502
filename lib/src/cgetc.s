@@ -1,18 +1,22 @@
 ; cgetc - get a character from the keyboard
 
-; TODO - support cursor
-
         .export _cgetc
-
+        .import cursor
         .include "compe.inc"
 
-;        .import _RDKEY
 
 ; char cgetc (void);
 
 _cgetc:
-        lda IO_VIA_IFR
+        lda cursor
+        beq @wait
+        lda #$F9        ; enable cursor
+        sta VIDEO_DATA
+@wait:  lda IO_VIA_IFR
         and #%00000010
-        beq _cgetc
+        beq @wait
         lda IO_VIA_PORTA
+        pha
+        lda #$F8        ; disable cursor
+        pla
         rts

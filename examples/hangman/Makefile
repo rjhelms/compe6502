@@ -11,10 +11,12 @@ TEMP := tmp
 PROJECT = hangman
 TARGET = $(BIN)/$(PROJECT).bin
 HEXFILE = $(BIN)/$(PROJECT).hex
+WAVE = $(BIN)/$(PROJECT).wav
 
 LIB = ../../lib/compe6502.lib
 CONFIG = ../../lib/compe6502_RAM.cfg
-CC_FLAGS = -O
+CC65_INC = ../../include
+CC_FLAGS = -O -I $(CC65_INC)
 CA_FLAGS =
 
 START_ADDRESS = 0x600
@@ -26,7 +28,10 @@ OBJECTS = $(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(SOURCES))
 .PHONY: all clean
 .SECONDARY: 
 
-all: $(HEXFILE)
+all: $(HEXFILE) $(WAVE)
+
+$(WAVE): $(TARGET)
+	python ../../util/bin2tape.py $(TARGET) $(START_ADDRESS)
 
 $(HEXFILE): $(TARGET)
 	srec_cat $(TARGET) -Binary -offset $(START_ADDRESS) -o $(HEXFILE) -intel -address-length=2

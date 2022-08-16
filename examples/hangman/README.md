@@ -4,3 +4,4 @@ A simple implenetation of the classic game Hangman, as a modest example of the c
 
 ![](img/hangman_1.jpg)
 ![](img/hangman_2.jpg)
+![](img/hangman_3.jpg)

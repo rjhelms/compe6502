@@ -24,6 +24,5 @@
         entrypoint _B_VRAM_CLEAR, B_VRAM_CLEAR
         entrypoint _B_COUT_NO_CC, B_COUT_NO_CC
         entrypoint _B_COUT, B_COUT
-        entrypoint _B_CHECK_SCROLL, B_CHECK_SCROLL
-        entrypoint _B_SCROLL, B_SCROLL
+        entrypoint _B_VIDEO_INIT, B_VIDEO_INIT
         entrypoint _B_COLDSTART, B_COLDSTART

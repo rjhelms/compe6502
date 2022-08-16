@@ -66,8 +66,8 @@ jumptable       B_VRAM_CLEAR_FULL,      VRAM_CLEAR_FULL
 jumptable       B_VRAM_CLEAR,           VRAM_CLEAR
 jumptable       B_COUT_NO_CC,           COUT_NO_CC
 jumptable       B_COUT,                 COUT
-jumptable       B_CHECK_SCROLL,         CHECK_SCROLL
-jumptable       B_SCROLL,               SCROLL
+jumptable       B_VIDEO_INIT,           VIDEO_INIT
+jumptable       B_Reserve30,            RESERVE
 
 .export B_COLDSTART
 
@@ -76,7 +76,7 @@ jumptable       B_SCROLL,               SCROLL
         cli
 
         jsr IO_INIT
-
+        jsr VIDEO_INIT
         lda PWR_UP      ; check power up byte
         cmp #CHK_BYTE
         bne :+
@@ -115,11 +115,11 @@ VECT_SET:
         lda PWR_UP      ; display magic byte
         jsr PRBYTE
 
-        LDA #<MSG_WELCOME
-        STA MSGL
-        LDA #>MSG_WELCOME
-        STA MSGH
-        JSR SHWMSG      ;* Show Welcome.
+        lda #<MSG_WELCOME
+        sta MSGL
+        lda #>MSG_WELCOME
+        sta MSGH
+        jsr SHWMSG      ;* Show Welcome.
 
         jmp BASIC_COLD
 .endproc
@@ -177,15 +177,15 @@ DO_BRK:                 ; else, call BRK soft vector
 .endproc
 
 .segment "RODATA"
-MSG_VRAM_OK:    .byte "VRAM OK", $0D, $00
+MSG_VRAM_OK:    .byte "VRAM OK", $0A, $00
 MSG_MEM_TEST:   .byte "RAM TEST ", $00
 MSG_MEM_ROM_VER:
                 .byte "ROM CHECKSUM ", $00
 MSG_WELCOME:
-        .byte $0D
-        .byte $C9, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $BB, $0D
-        .byte $BA, " Comp", $82, "6502 ", $BA, $0D
-        .byte $C8, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $BC, $0D, $0D, 0
+        .byte $0A
+        .byte $C9, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $BB, $0A
+        .byte $BA, " Comp", $82, "6502 ", $BA, $0A
+        .byte $C8, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $BC, $0D, $0A, 0
 VEC_DATA:
         .addr BRK_DEFAULT       ; NMIVEC0
         .addr BRK_DEFAULT       ; BRKVEC0

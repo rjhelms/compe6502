@@ -1,0 +1,116 @@
+
+build/boot2_is25lp080.elf:     file format elf32-littlearm
+
+
+Disassembly of section .text:
+
+20041f00 <_stage2_boot>:
+20041f00:	b500      	push	{lr}
+20041f02:	4b2b      	ldr	r3, [pc, #172]	; (20041fb0 <literals+0x2>)
+20041f04:	2100      	movs	r1, #0
+20041f06:	6099      	str	r1, [r3, #8]
+20041f08:	2102      	movs	r1, #2
+20041f0a:	6159      	str	r1, [r3, #20]
+
+20041f0c <program_sregs>:
+20041f0c:	4929      	ldr	r1, [pc, #164]	; (20041fb4 <literals+0x6>)
+20041f0e:	6019      	str	r1, [r3, #0]
+20041f10:	2101      	movs	r1, #1
+20041f12:	6099      	str	r1, [r3, #8]
+20041f14:	4828      	ldr	r0, [pc, #160]	; (20041fb8 <literals+0xa>)
+20041f16:	f000 f842 	bl	20041f9e <read_flash_sreg>
+20041f1a:	4a28      	ldr	r2, [pc, #160]	; (20041fbc <literals+0xe>)
+20041f1c:	4290      	cmp	r0, r2
+20041f1e:	d012      	beq.n	20041f46 <skip_sreg_programming>
+20041f20:	2106      	movs	r1, #6
+20041f22:	6619      	str	r1, [r3, #96]	; 0x60
+20041f24:	f000 f832 	bl	20041f8c <wait_ssi_ready>
+20041f28:	6e19      	ldr	r1, [r3, #96]	; 0x60
+20041f2a:	2101      	movs	r1, #1
+20041f2c:	6619      	str	r1, [r3, #96]	; 0x60
+20041f2e:	2000      	movs	r0, #0
+20041f30:	661a      	str	r2, [r3, #96]	; 0x60
+20041f32:	f000 f82b 	bl	20041f8c <wait_ssi_ready>
+20041f36:	6e19      	ldr	r1, [r3, #96]	; 0x60
+20041f38:	6e19      	ldr	r1, [r3, #96]	; 0x60
+20041f3a:	481f      	ldr	r0, [pc, #124]	; (20041fb8 <literals+0xa>)
+20041f3c:	f000 f82f 	bl	20041f9e <read_flash_sreg>
+20041f40:	2101      	movs	r1, #1
+20041f42:	4208      	tst	r0, r1
+20041f44:	d1f9      	bne.n	20041f3a <program_sregs+0x2e>
+
+20041f46 <skip_sreg_programming>:
+20041f46:	2100      	movs	r1, #0
+20041f48:	6099      	str	r1, [r3, #8]
+
+20041f4a <dummy_read>:
+20041f4a:	491d      	ldr	r1, [pc, #116]	; (20041fc0 <literals+0x12>)
+20041f4c:	6019      	str	r1, [r3, #0]
+20041f4e:	2100      	movs	r1, #0
+20041f50:	6059      	str	r1, [r3, #4]
+20041f52:	491c      	ldr	r1, [pc, #112]	; (20041fc4 <literals+0x16>)
+20041f54:	481c      	ldr	r0, [pc, #112]	; (20041fc8 <literals+0x1a>)
+20041f56:	6001      	str	r1, [r0, #0]
+20041f58:	2101      	movs	r1, #1
+20041f5a:	6099      	str	r1, [r3, #8]
+20041f5c:	21eb      	movs	r1, #235	; 0xeb
+20041f5e:	6619      	str	r1, [r3, #96]	; 0x60
+20041f60:	21a0      	movs	r1, #160	; 0xa0
+20041f62:	6619      	str	r1, [r3, #96]	; 0x60
+20041f64:	f000 f812 	bl	20041f8c <wait_ssi_ready>
+20041f68:	2100      	movs	r1, #0
+20041f6a:	6099      	str	r1, [r3, #8]
+
+20041f6c <configure_ssi>:
+20041f6c:	4917      	ldr	r1, [pc, #92]	; (20041fcc <literals+0x1e>)
+20041f6e:	4816      	ldr	r0, [pc, #88]	; (20041fc8 <literals+0x1a>)
+20041f70:	6001      	str	r1, [r0, #0]
+20041f72:	2101      	movs	r1, #1
+20041f74:	6099      	str	r1, [r3, #8]
+
+20041f76 <check_return>:
+20041f76:	bc01      	pop	{r0}
+20041f78:	2800      	cmp	r0, #0
+20041f7a:	d000      	beq.n	20041f7e <vector_into_flash>
+20041f7c:	4700      	bx	r0
+
+20041f7e <vector_into_flash>:
+20041f7e:	4814      	ldr	r0, [pc, #80]	; (20041fd0 <literals+0x22>)
+20041f80:	4914      	ldr	r1, [pc, #80]	; (20041fd4 <literals+0x26>)
+20041f82:	6008      	str	r0, [r1, #0]
+20041f84:	c803      	ldmia	r0, {r0, r1}
+20041f86:	f380 8808 	msr	MSP, r0
+20041f8a:	4708      	bx	r1
+
+20041f8c <wait_ssi_ready>:
+20041f8c:	b503      	push	{r0, r1, lr}
+20041f8e:	6a99      	ldr	r1, [r3, #40]	; 0x28
+20041f90:	2004      	movs	r0, #4
+20041f92:	4201      	tst	r1, r0
+20041f94:	d0fb      	beq.n	20041f8e <wait_ssi_ready+0x2>
+20041f96:	2001      	movs	r0, #1
+20041f98:	4201      	tst	r1, r0
+20041f9a:	d1f8      	bne.n	20041f8e <wait_ssi_ready+0x2>
+20041f9c:	bd03      	pop	{r0, r1, pc}
+
+20041f9e <read_flash_sreg>:
+20041f9e:	b502      	push	{r1, lr}
+20041fa0:	6618      	str	r0, [r3, #96]	; 0x60
+20041fa2:	6618      	str	r0, [r3, #96]	; 0x60
+20041fa4:	f7ff fff2 	bl	20041f8c <wait_ssi_ready>
+20041fa8:	6e18      	ldr	r0, [r3, #96]	; 0x60
+20041faa:	6e18      	ldr	r0, [r3, #96]	; 0x60
+20041fac:	bd02      	pop	{r1, pc}
+
+20041fae <literals>:
+20041fae:	0000      	.short	0x0000
+20041fb0:	18000000 	.word	0x18000000
+20041fb4:	00070000 	.word	0x00070000
+20041fb8:	00000005 	.word	0x00000005
+20041fbc:	00000040 	.word	0x00000040
+20041fc0:	005f0300 	.word	0x005f0300
+20041fc4:	00002221 	.word	0x00002221
+20041fc8:	180000f4 	.word	0x180000f4
+20041fcc:	a0002022 	.word	0xa0002022
+20041fd0:	10000100 	.word	0x10000100
+20041fd4:	e000ed08 	.word	0xe000ed08

@@ -1,12 +1,8 @@
 #include <conio.h>
 #include <stdlib.h>
+#include <stdbool.h>
+#include <compe.h>
 #include "word_list.h"
-
-typedef enum
-{
-    false,
-    true
-} bool;
 
 const char hangman_top[] = " +---+\r\n |   ";
 const char hangman_bottom[] = "\r\n |\r\n-+----";
@@ -55,18 +51,20 @@ void build_word_ptr()
 
 void welcome()
 {
+    textcolor(COLOR_YELLOW);
+    bgcolor(COLOR_BLUE);
     clrscr();
-    cprintf("\r\nHANGMAN\r\n\n");
-    cprintf("2021 Rob Hailman\r\n\n");
+    cputs("\r\nHANGMAN\r\n\n");
+    cputs("2021-2022 Rob Hailman\r\n\n");
 
-    cprintf(hangman_top);
-    cprintf(hangman[6]);
-    cprintf(hangman_bottom);
-    cprintf("\r\n\n");
+    cputs(hangman_top);
+    cputs(hangman[6]);
+    cputs(hangman_bottom);
+    cputs("\r\n\n");
     
-    cprintf("Building word list...\r\n\n");
+    cputs("Building word list...\r\n\n");
     build_word_ptr();
-    cprintf("Press any key to begin\r\n");
+    cputs("Press any key to begin\r\n");
     // while waiting for key press, increment random seed
     while (!kbhit())
     {
@@ -109,16 +107,18 @@ void init_game()
 
 void draw_hangman()
 {
-    cprintf(hangman_top);
-    cprintf(hangman[guess]);
-    cprintf(hangman_bottom);
-    cprintf("\r\n\n");
+    cputs(hangman_top);
+    cputs(hangman[guess]);
+    cputs(hangman_bottom);
+    cputs("\r\n\n");
 }
 
 // draw the game screen
 void draw_screen()
 {
     unsigned char i = 0;
+    bgcolor(COLOR_BLACK);
+    textcolor(COLOR_WHITE);
     clrscr();
     draw_hangman();
 
@@ -133,7 +133,7 @@ void draw_screen()
             cputc('_');
         }
     }
-    cprintf("\r\n\nRemaining letters:\r\n");
+    cputs("\r\n\nRemaining letters:\r\n");
 
     for (i = 0; i < 26; i++)
     {
@@ -146,7 +146,7 @@ void draw_screen()
             cputc(i + 0x61);
         }
     }
-    cprintf("\r\n\n");
+    cputs("\r\n\n");
 }
 
 // get a guess from the keyboard
@@ -198,13 +198,17 @@ void end_screen()
     draw_hangman();
     if (game_won)
     {
-        cprintf("You won!\r\n\n");
+        bgcolor(COLOR_GREEN);
+        cputs("You won!\r\n\n");
     }
     else
     {
-        cprintf("Game over!\r\n\n");
+        bgcolor(COLOR_RED);
+        cputs("Game over!\r\n\n");
     }
-    cprintf("The word was \r\n\n%s\r\n\n", word);
+    cputs("The word was \r\n\n");
+    cputs(word);
+    cputs("\r\n\n");
 }
 
 // main game loop
@@ -218,14 +222,15 @@ int play_game()
         input_valid = false;
         while (input_valid == false)
         {
-            cprintf("Guess a letter\r\n");
+            cputs("Guess a letter\r\n");
             input = get_guess();
             if (input > 0)
             {
                 if (letters_guessed[input - 0x61])
                 {
                     draw_screen();
-                    cprintf("You already guessed that!\r\n");
+                    cputs("You already guessed that!\r\n");
+                    B_BEEP();
                 }
                 else
                 {
@@ -235,7 +240,8 @@ int play_game()
             else
             {
                 draw_screen();
-                cprintf("Please enter a letter!\r\n");
+                cputs("Please enter a letter!\r\n");
+                B_BEEP();
             }
         }
 
@@ -248,7 +254,7 @@ int play_game()
     }
     end_screen();
     input = 0;
-    cprintf("Play again? (Y/N)");
+    cputs("Play again? (Y/N)");
     while (input != 'y' & input != 'n')
         input = get_guess();
     if (input == 'y')
@@ -258,9 +264,12 @@ int play_game()
 
 int main()
 {
+    cursor(1);
     welcome();
     while (play_game())
     {
     }
+    bgcolor(COLOR_BLACK);
+    textcolor(COLOR_WHITE);
     return (0);
 }
