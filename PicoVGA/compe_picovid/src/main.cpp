@@ -96,6 +96,35 @@ void FlipCursorIfActive()
 	}
 }
 
+void TextAdvanceWrap()
+{
+	PrintX++;
+	if (PrintX >= PrintBufW)
+	{
+		PrintX -= PrintBufW;
+		PrintY++;
+	}
+}
+
+// print character without advancing pointer
+void PrintChar0NoAdv(char ch)
+{
+	if (((u32)PrintX < (u32)PrintBufW) && ((u32)PrintY < (u32)PrintBufH))
+	{
+		if ((PrintBufWB < 2*PrintBufW))
+		{
+			u8* d = &PrintBuf[PrintX + PrintY*PrintBufWB];
+			*d = ch;
+		}
+		else
+		{
+			u8* d = &PrintBuf[PrintX*2 + PrintY*PrintBufWB];
+			*d++ = ch;
+			*d = PrintCol;
+		}
+	}
+}
+
 void PrintChar0Wrap(char ch)
 {
 	PrintChar0(ch);
@@ -561,7 +590,7 @@ int main()
 
 			case CMD_D0_WRITE_CHAR:
 				FlipCursorIfActive();
-				PrintChar0(last_byte);
+				PrintChar0NoAdv(last_byte);
 				FlipCursorIfActive();
 				state = DEFAULT;
 				break;
@@ -620,6 +649,14 @@ int main()
 					break;
 				case 0xD0: // write single text char
 					state = CMD_D0_WRITE_CHAR;
+					break;
+				case 0xD1: // get byte at current position
+					set_direction(true);
+					write_byte((u8)textBuf[GetTextBufOffset(PrintX, PrintY)]);
+					set_direction(false);
+					break;
+				case 0xD6: // advance cursor one position w/ wrap
+					TextAdvanceWrap();
 					break;
 				case 0xD8: // get X position
 					set_direction(true);

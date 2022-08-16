@@ -1,7 +1,7 @@
 ; void __fastcall__ cputcxy (unsigned char x, unsigned char y, char c);
 
 
-.export _cputcxy, _cputc, cout, putchar, newline
+.export _cputcxy, _cputc, cputdirect, putchar, newline
 
 .include "compe.inc"
 
@@ -24,32 +24,30 @@ _cputc:
 ; any other control characters to check for? tab, backspace, etc
         beq newline
 
-cout:
+cputdirect:
         jsr putchar
-        inc SCREEN_PTR
-        bne :+
-        inc SCREEN_PTR + 1
-:       rts
-
+        lda #$D6
+        sta VIDEO_DATA
+        rts
 
 left:
-        lda SCREEN_PTR
-        and #$E0
-        sta SCREEN_PTR
+        lda #$DE        ; set X absolute
+        sta VIDEO_DATA
+        lda #$00
+        sta VIDEO_DATA
         rts
 
 newline:
-        lda SCREEN_PTR
-        clc
-        adc #$20
-        sta SCREEN_PTR
-        bcc :+
-        lda SCREEN_PTR + 1
-        adc #$00
-        sta SCREEN_PTR + 1
-:       rts
+        lda #$DD        ; set Y relatve
+        sta VIDEO_DATA
+        lda #$01
+        sta VIDEO_DATA
+        rts
 
 putchar:                        ; put character on screen w/o advancing cursor
-        ldy #$00
-        sta (SCREEN_PTR), Y
+        pha
+        lda #$D0
+        sta VIDEO_DATA
+        pla
+        sta VIDEO_DATA
         rts

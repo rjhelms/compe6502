@@ -13,7 +13,7 @@ _chlinexy:
 ; void __fastcall__ chline (unsigned char length);
 
 _chline:
-        ldx #$C4
+        ldx #$15
 
 chlinedirect:
         stx tmp1
