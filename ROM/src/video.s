@@ -16,12 +16,8 @@
 .export MOVE_X_REL, MOVE_Y_REL
 .export COUT_NO_CC, COUT
 
-VRAM_START      = SLOT1
-VRAM_END        = SLOT1 + $400
-SCREEN_END      = SLOT1 + $300
-
-VIDEO_STATUS    = SLOT1
-VIDEO_DATA      = SLOT1 + $01
+VIDEO_STATUS    = SLOT7
+VIDEO_DATA      = SLOT7 + $01
 
 .segment "ZPBIOS": zeropage
 VIDCMDL:        .res 1
