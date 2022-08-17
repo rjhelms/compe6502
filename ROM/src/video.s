@@ -15,7 +15,8 @@
 .export VRAM_TEST, VRAM_CLEAR, VRAM_CLEAR_FULL
 .export MOVE_X_REL, MOVE_Y_REL
 .export COUT_NO_CC, COUT
-
+.export RESET_VMODE
+.export VIDEO_STATUS, VIDEO_DATA
 VIDEO_STATUS    = SLOT7
 VIDEO_DATA      = SLOT7 + $01
 
@@ -106,4 +107,14 @@ CHK_07: cmp #$07        ; bell
         bne OUT
         jmp BEEP
 OUT:    jmp VIDEO_SEND_BYTE
+.endproc
+
+.proc RESET_VMODE
+        lda #$03        ; ensure video mode is valid - exit test
+        sta VIDEO_DATA
+        lda #$F0        ; set 40col
+        sta VIDEO_DATA
+        lda #$02        ; enable text
+        sta VIDEO_DATA
+        rts
 .endproc

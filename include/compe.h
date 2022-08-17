@@ -19,6 +19,12 @@
 #define COLOR_YELLOW        14
 #define COLOR_WHITE         15
 
+#define TGI_COLOR_BLACK     0
+#define TGI_COLOR_WHITE     1
+
+// no support for dynamic drivers until there's disk support!
+#define DYN_DRV 0
+
 unsigned char get_video_byte (void);
 void B_BEEP(void);
 
