@@ -74,3 +74,16 @@ B_COUT_NO_CC    = $FF51
 B_COUT          = $FF54
 B_VIDEO_INIT    = $FF57
 B_COLDSTART     = $FF5D
+
+; vector table
+NMIVEC0         = $0300
+BRKVEC0         = $0302
+IRQVEC0         = $0304
+NMIRET0         = $0306
+BRKRET0         = $0308
+IRQRET0         = $030A
+CLOCK_TICKS     = $030F
+
+IRQ_DEFAULT     = $FFD2
+BRK_DEFAULT     = $FF5D
+NMI_DEFAULT     = $FF5D
