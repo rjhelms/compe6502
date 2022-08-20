@@ -3,7 +3,7 @@
 .include "asminc/zeropage.inc"
 .include "asminc/slot_defs.inc"
 
-TIMER_COUNT = 16667     ; 60 ticks per second with a 1 MHz clock
+TIMER_COUNT = 15625     ; 64 ticks per second with a 1 MHz clock
 
 .export IO_VIA_START    = SLOT0
 .export IO_VIA_PORTB    = IO_VIA_START + $00
