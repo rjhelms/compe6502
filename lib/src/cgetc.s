@@ -18,5 +18,6 @@ _cgetc:
         lda IO_VIA_PORTA
         pha
         lda #$F8        ; disable cursor
+        sta VIDEO_DATA
         pla
         rts
