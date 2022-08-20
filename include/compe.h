@@ -1,6 +1,7 @@
 #ifndef _COMPE_H
 #define _COMPE_H
 
+
 /* Color defines */
 #define COLOR_BLACK         0
 #define COLOR_BLUE          1
@@ -18,6 +19,9 @@
 #define COLOR_LIGHTMAGENTA  13
 #define COLOR_YELLOW        14
 #define COLOR_WHITE         15
+
+/* time defines */
+#define CLOCKS_PER_SEC      60
 
 unsigned char get_video_byte (void);
 void B_BEEP(void);
