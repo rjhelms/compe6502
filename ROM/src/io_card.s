@@ -3,6 +3,8 @@
 .include "asminc/zeropage.inc"
 .include "asminc/slot_defs.inc"
 
+TIMER_COUNT = 15625     ; 64 ticks per second with a 1 MHz clock
+
 .export IO_VIA_START    = SLOT0
 .export IO_VIA_PORTB    = IO_VIA_START + $00
 .export IO_VIA_PORTA    = IO_VIA_START + $01
@@ -30,6 +32,14 @@
 .export IO_MASK_CAS_TX          = %01000000
 .export IO_MASK_CAS_RX          = %10000000
 
+.export IO_ACR_T1_MODE0    = %00000000     ; One shot mode.
+.export IO_ACR_T1_MODE1    = %01000000     ; Continuous mode.
+.export IO_ACR_T1_MODE2    = %10000000     ; Mode 0. Plus PB7 one shot output
+.export IO_ACR_T1_MODE3    = %11000000     ; Mode 1. Plus PB7 square wave output
+
+.export IO_IER_ENABLE  = %10000000
+.export IO_IER_TIMER1  = %01000000
+
 .export IO_PCR_CA2_HANDSHAKE    = %00001000
 
 .segment "SD_WORK"
@@ -38,11 +48,12 @@
 
 .segment "SYS"
 
-.export IO_INIT, KEY_GET, KEY_READ, BEEP, CLOAD, CSAVE, CPUTBYTE, CGETBYTE
-.export CLEADER
+.export IO_INIT, TIMER_INIT, KEY_GET, KEY_READ, BEEP, CLOAD, CSAVE, CPUTBYTE
+.export CGETBYTE, CLEADER, TIMER_IRQ
 
 .import SHWMSG, PRBYTE
 .import COUT
+.import IRQRET0, CLOCK_TICKS
 
 .proc IO_INIT
         pha
@@ -59,6 +70,22 @@
         lda #IO_MASK_KBD_REPT | IO_MASK_SPKR | IO_MASK_CAS_TX
         sta IO_VIA_DDRB
 
+        pla
+        rts
+.endproc
+
+; TIMER_INIT
+.proc TIMER_INIT
+        pha
+        ; initialize timer
+        lda #(IO_IER_ENABLE | IO_IER_TIMER1)
+        sta IO_VIA_IER
+        lda #IO_ACR_T1_MODE1
+        sta IO_VIA_ACR
+        lda #<TIMER_COUNT
+        sta IO_VIA_T1CL
+        lda #>TIMER_COUNT
+        sta IO_VIA_T1CH
         pla
         rts
 .endproc
@@ -419,6 +446,7 @@ out_leader:                             ; record 5 second leader
 ; outputs byte in A register to cassette port
 
 .proc CPUTBYTE
+        sei
         phy                     ; stash A & Y regs
         pha
         ; initialize IO port for output
@@ -454,6 +482,7 @@ out_leader:                             ; record 5 second leader
         sty     IO_VIA_PORTB
         pla                     ; restore A & Y regs
         ply
+        cli
         rts
 .endproc
 
@@ -463,6 +492,7 @@ out_leader:                             ; record 5 second leader
 ; assumes IO port is in a valid state
 
 .proc CGETBYTE
+        sei
         phy
         ldy     #$08            ; init load counter
 start:
@@ -477,6 +507,7 @@ input:
         dey
         bne     input           ; keep going if not at bit 0
         ply
+        cli
         beq     CWAIT           ; else, use WAIT to get into the stop bit
 .endproc
 
@@ -529,6 +560,24 @@ done:
         rts                     ; and return
 .endproc
 
+; TIMER_IRQ
+;
+; increment 4-byte CLOCK_TICKS and clear interruprt
+
+.proc TIMER_IRQ
+        bit IO_VIA_T1CL ; read counter to clear interrupt
+        ldx #$00        ; set index to 0
+@L1:    lda #$01        ; load 1
+        clc
+        adc CLOCK_TICKS, x    ; add to current byte with carry
+        sta CLOCK_TICKS, x
+        bcc @done       ; check if need to carry
+        inx             ; increment index and loop if not at 4
+        cpx #$04
+        bne @L1
+@done:  rts
+.endproc
+
 .SEGMENT "RODATA"
 MSG_PRESS_PLAY:
         .byte "Press play on cassette.", $0A, $00
@@ -542,3 +591,4 @@ MSG_CHECKSUM_FAIL:
         .byte "Checksum fail", $0A, $00
 MSG_SAVE_COMPLETE:
         .byte "Save complete", $0A, $00
+

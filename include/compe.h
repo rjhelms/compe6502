@@ -25,6 +25,9 @@
 // no support for dynamic drivers until there's disk support!
 #define DYN_DRV 0
 
+/* time defines */
+#define CLOCKS_PER_SEC      64
+
 unsigned char get_video_byte (void);
 void B_BEEP(void);
 

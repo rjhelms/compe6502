@@ -15,6 +15,7 @@ CHK_BYTE = <ROM_VER ^ >ROM_VER
 
 .import         PRSTATUS
 
+.import         TIMER_INIT, TIMER_IRQ
 .import         MEM_TEST
 .import         VRAM_TEST
 
@@ -25,7 +26,7 @@ CHK_BYTE = <ROM_VER ^ >ROM_VER
 VECT_TAB_LEN    = VECT_TAB_START - VECT_TAB_END
 
 .export         IRQ_VECTOR, NMI_VECTOR
-
+.export         IRQ_DEFAULT, BRK_DEFAULT
 .segment "SYS"
 RESERVE:
         rts
@@ -80,10 +81,11 @@ jumptable       B_RESET_VMODE,          RESET_VMODE
 
         jsr IO_INIT
         jsr VIDEO_INIT
-        lda PWR_UP      ; check power up byte
+        lda PWR_UP              ; check power up byte
         cmp #CHK_BYTE
-        bne :+
-        jmp (WARMRESET)         ; if set, go to warm reset
+        bne :+                  ; if set, go to warm reset
+        jsr TIMER_INIT          ; need to initialize timer again on reset
+        jmp (WARMRESET)         
                                 ; otherwise, continue with startup
 :       jsr VRAM_TEST
         jsr VRAM_CLEAR_FULL
@@ -108,6 +110,8 @@ VECT_SET:
         iny
         cpy #<VECT_TAB_LEN
         bne VECT_SET
+
+        jsr TIMER_INIT
 
         lda #<MSG_MEM_ROM_VER
         sta MSGL
@@ -156,6 +160,7 @@ DO_BRK:                 ; else, call BRK soft vector
 
 ; default IRQ soft vector - just returns
 .proc IRQ_DEFAULT
+        jsr TIMER_IRQ
         jmp (IRQRET0)
 .endproc
 
@@ -191,11 +196,12 @@ MSG_WELCOME:
         .byte $BA, " Comp", $82, "6502 ", $BA, $0A
         .byte $C8, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $BC, $0D, $0A, 0
 VEC_DATA:
-        .addr BRK_DEFAULT       ; NMIVEC0
-        .addr BRK_DEFAULT       ; BRKVEC0
-        .addr IRQ_DEFAULT       ; IRQVEC0
-        .addr MON_COLDRESET     ; NMIRET0
-        .addr MON_COLDRESET     ; BRKRET0
-        .addr IRQ_RETURN        ; IRQRET0
-        .addr MON_WARMRESET     ; WARMRESET
-        .byte CHK_BYTE          ; PWR_UP
+        .addr   BRK_DEFAULT     ; NMIVEC0
+        .addr   BRK_DEFAULT     ; BRKVEC0
+        .addr   IRQ_DEFAULT     ; IRQVEC0
+        .addr   MON_COLDRESET   ; NMIRET0
+        .addr   MON_COLDRESET   ; BRKRET0
+        .addr   IRQ_RETURN      ; IRQRET0
+        .addr   MON_WARMRESET   ; WARMRESET
+        .byte   CHK_BYTE        ; PWR_UP
+        .dword  $00000000       ; CLOCK_TICKS
