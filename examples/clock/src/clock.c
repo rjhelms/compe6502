@@ -8,6 +8,14 @@
 #include <compe.h>
 
 #define CLOCK_TICKS 0x030F
+#define VIDEO_DATA  0xB801
+
+#define SECOND_RADIUS 32
+#define MINUTE_RADIUS 32
+#define HOUR_RADIUS   24
+
+#define ASPECT_RADIO  0x0066
+
 clock_t cur_time;
 signed long offset;
 unsigned int seconds;
@@ -24,6 +32,7 @@ char in_buf[32];
 
 unsigned int __fastcall__ get_val(char *prompt);
 void __fastcall__ set_time();
+void __fastcall__ draw_hand(unsigned int angle, unsigned char radius, char character);
 
 void build_tables()
 {
@@ -82,9 +91,22 @@ void set_time()
 
     cprintf("\r\n%02u:%02u:%02u\r\n", new_hours, new_minutes, new_seconds);
 
-    new_time = ((unsigned long)new_hours * 216000) + ((unsigned long)new_minutes * 3600) + (new_seconds * 60);
+    new_time = (new_seconds * CLOCKS_PER_SEC);
+    new_time += ((unsigned long)new_minutes * (60 * CLOCKS_PER_SEC));
+    new_time += ((unsigned long)new_hours * (3600UL * CLOCKS_PER_SEC));
+
     *(unsigned long *)CLOCK_TICKS = new_time;
     cprintf("%lu\r\n%lu\r\n", new_time, clock());
+}
+
+void draw_hand(unsigned int angle, unsigned char radius, char character)
+{
+    for (idx = radius; idx > 0; idx--)
+    {
+        gotox(40 + tgi_imulround(idx, cos_table[angle]));
+        gotoy(12 + tgi_imulround(tgi_imulround(idx, ASPECT_RADIO), sin_table[angle]));
+        cputc(character);
+    }
 }
 
 int main()
@@ -92,11 +114,14 @@ int main()
     clrscr();
     build_tables();
     set_time();
+    *(unsigned char *)VIDEO_DATA = 0xF1;
+
     while (true)
     {
         cur_time = clock();
-        cur_time /= 60;
+        cur_time /= CLOCKS_PER_SEC;
         new_seconds = cur_time % 60;
+
         if (new_seconds != seconds)
         {
             seconds = new_seconds;
@@ -107,15 +132,13 @@ int main()
             clrscr();
             gotoxy(0, 0);
             cprintf("%02u:%02u:%02u\r\n", hours, minutes, seconds);
-            gotoxy(20 + tgi_imulround(19, cos_table[seconds * 6]),
-                   12 + tgi_imulround(11, sin_table[seconds * 6]));
-            cputc('S');
-            gotoxy(20 + tgi_imulround(17, cos_table[(minutes * 6) + (seconds / 10)]),
-                   12 + tgi_imulround(10, sin_table[(minutes * 6) + seconds / 10]));
-            cputc('M');
-            gotoxy(20 + tgi_imulround(14, cos_table[(hours * 30) + (minutes / 10)]),
-                   12 + tgi_imulround(8, sin_table[(hours * 30) + (minutes / 10)]));
-            cputc('H');
+            draw_hand(seconds * 6, SECOND_RADIUS, 'S');
+            draw_hand((minutes * 6) + (seconds / 10), MINUTE_RADIUS, 'M');
+            draw_hand((hours * 30) + (minutes / 10), HOUR_RADIUS, 'H');
+
+            gotoxy(40,12);  // put a dot in the centre
+            cputc(0x10);
+            
             // cprintf("%04X, %04X", sin_table[seconds], cos_table[seconds]);
         }
     }
