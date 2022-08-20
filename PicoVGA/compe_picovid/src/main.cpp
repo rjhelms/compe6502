@@ -98,12 +98,14 @@ void FlipCursorIfActive()
 
 void TextAdvanceWrap()
 {
+	FlipCursorIfActive();
 	PrintX++;
 	if (PrintX >= PrintBufW)
 	{
 		PrintX -= PrintBufW;
 		PrintY++;
 	}
+	FlipCursorIfActive();
 }
 
 // print character without advancing pointer
