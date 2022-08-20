@@ -79,10 +79,11 @@ jumptable       B_Reserve30,            RESERVE
 
         jsr IO_INIT
         jsr VIDEO_INIT
-        lda PWR_UP      ; check power up byte
+        lda PWR_UP              ; check power up byte
         cmp #CHK_BYTE
-        bne :+
-        jmp (WARMRESET)         ; if set, go to warm reset
+        bne :+                  ; if set, go to warm reset
+        jsr TIMER_INIT          ; need to initialize timer again on reset
+        jmp (WARMRESET)         
                                 ; otherwise, continue with startup
 :       jsr VRAM_TEST
         jsr VRAM_CLEAR_FULL
