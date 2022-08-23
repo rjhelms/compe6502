@@ -517,11 +517,11 @@ input:
 
 CWAIT:
         jsr     CHALFWAIT       ; do half a wait, then fall through for the
-                                ; 2nd healf
+                                ; 2nd half
 
 CHALFWAIT:                      ; half the waiting time
         phy                     ; save Y
-        ldy     #$A3            ; 80 x 5us
+        ldy     #$A3            ; 163 x 5us
 CWAIT1:
         dey
         bne     CWAIT1
