@@ -54,6 +54,6 @@ $(OBJ):
 $(BIN):
 	mkdir $(BIN)
 clean:
-	rm -rf $(BIN)
-	rm -rf $(OBJ)
-	rm -rf $(TEMP)
+	rm -rf $(BIN)/*
+	rm -rf $(OBJ)/*
+	rm -rf $(TEMP)/*
