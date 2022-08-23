@@ -521,13 +521,10 @@ CWAIT:
 
 CHALFWAIT:                      ; half the waiting time
         phy                     ; save Y
-        ldy     #$48            ; first part - 72 x 5us
+        ldy     #$A3            ; 80 x 5us
 CWAIT1:
         dey
         bne     CWAIT1
-CWAIT2:
-        dey                     ; Y was 0 on entry, so 255 x 5us for 2nd part
-        bne     CWAIT2 
         ply                     ; retrieve Y
         rts
 
@@ -544,7 +541,7 @@ CWAIT2:
         sta     IO_VIA_PORTB
         pla
 loop1:                          ; outer loop - 1/10th of second
-        ldx     #$1E            ; 30 byte periods
+        ldx     #$3C            ; 60 byte-periods
 
 loop2:                          ; inner loop - 1 byte period
         jsr     CWAIT
