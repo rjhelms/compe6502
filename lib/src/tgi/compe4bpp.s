@@ -28,7 +28,7 @@ Y2      :=      ptr4
         .word   320             ; X resolution
         .word   192             ; Y resolution
         .byte   16              ; Number of drawing colors
-        .byte   1               ; Number of screens available
+        .byte   2               ; Number of screens available
         .byte   0               ; System font X size
         .byte   0               ; System font Y size
         .word   $00CC           ; Aspect ratio (based on 4/3 display)
@@ -119,18 +119,6 @@ INSTALL:
 UNINSTALL:
         ; Fall through
 
-; SETVIEWPAGE: Set the visible page. Called with the new page in A (0..n).
-; The page number is already checked to be valid by the graphics kernel.
-; Must set an error code: NO (will only be called if page ok)
-SETVIEWPAGE:
-        ; Fall through
-
-; SETDRAWPAGE: Set the drawable page. Called with the new page in A (0..n).
-; The page number is already checked to be valid by the graphics kernel.
-; Must set an error code: NO (will only be called if page ok)
-SETDRAWPAGE:
-        ; Fall through
-
 ; TEXTSTYLE: Set the style used when calling OUTTEXT. Text scaling in X and Y
 ; direction is passend in X/Y, the text direction is passed in A.
 ; Must set an error code: NO
@@ -173,6 +161,24 @@ CONTROL:
 ; Must set an error code: NO
 CLEAR:
         lda #$FE
+        sta VIDEO_DATA
+        rts
+
+; SETVIEWPAGE: Set the visible page. Called with the new page in A (0..n).
+; The page number is already checked to be valid by the graphics kernel.
+; Must set an error code: NO (will only be called if page ok)
+SETVIEWPAGE:
+        clc
+        adc #$CC
+        sta VIDEO_DATA
+        rts
+
+; SETDRAWPAGE: Set the drawable page. Called with the new page in A (0..n).
+; The page number is already checked to be valid by the graphics kernel.
+; Must set an error code: NO (will only be called if page ok)
+SETDRAWPAGE:
+        clc
+        adc #$CE
         sta VIDEO_DATA
         rts
 

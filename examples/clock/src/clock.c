@@ -44,6 +44,7 @@ unsigned int center_x;
 unsigned int center_y;
 
 unsigned char i;
+unsigned char page;
 
 char in_char;
 char in_buf[32];
@@ -168,6 +169,7 @@ void draw_hand(unsigned int angle, unsigned int radius_x, unsigned int radius_y)
 
 int main()
 {
+    page = 0;
     build_tables();
     set_time();
 
@@ -199,6 +201,12 @@ int main()
         minutes = cur_time % 60;
         cur_time /= 60;
         hours = cur_time % 12;
+        ++page;
+        if (page == 2)
+        {
+            page = 0;
+        }
+        tgi_setdrawpage(page);
         tgi_clear();
         tgi_setcolor(TGI_COLOR_WHITE);
         draw_hand((hours * 30) + (minutes / 2), hours_rx, hours_ry);
@@ -211,5 +219,6 @@ int main()
             tgi_line(ellipse_x[i], ellipse_y[i],
                      ellipse_x[i + 1], ellipse_y[i + 1]);
         }
+        tgi_setviewpage(page);
     }
 }
