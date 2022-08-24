@@ -17,6 +17,14 @@
 
 #define TICKS_PER_SIXTIETH 0x00F0 // 0.9375
 
+#ifdef _8PP
+    extern const void compe_8bpp_tgi[];
+#elif _4BPP
+    extern const void compe_4bpp_tgi[];
+#elif _1BPP
+    extern const void compe_1bpp_tgi[];
+#endif
+
 clock_t cur_time;
 signed long offset;
 
@@ -173,7 +181,16 @@ int main()
     build_tables();
     set_time();
 
-    tgi_install(tgi_static_stddrv);
+    #ifdef _8PP
+        tgi_install(compe_8bpp_tgi);
+    #elif _4BPP
+        tgi_install(compe_4bpp_tgi);
+    #elif _1BFF
+        tgi_install(compe_1bpp_tgi);
+    #else
+        tgi_install(tgi_static_stddrv);
+    #endif
+
     tgi_init();
     tgi_clear();
 
