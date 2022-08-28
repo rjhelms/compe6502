@@ -184,10 +184,12 @@ MSG_MEM_TEST:   .byte "RAM TEST ", $00
 MSG_MEM_ROM_VER:
                 .byte "ROM CHECKSUM ", $00
 MSG_WELCOME:
-        .byte $0A
-        .byte $C9, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $BB, $0A
-        .byte $BA, " Comp", $82, "6502 ", $BA, $0A
-        .byte $C8, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $CD, $BC, $0D, $0A, 0
+        .byte $0A, $03, $E0, $08, $02
+        .byte $1C, $15, $15, $15, $15, $15, $15, $15, $15, $15, $15, $15, $19, $0A
+        .byte $1A, $03, $E0, $0E, $02, " Compe6502 ", $03, $E0, $08, $02, $1A, $0A
+        .byte $16, $15, $15, $15, $15, $15, $15, $15, $15, $15, $15, $15, $13, $0A 
+        .byte $03, $E0, $0F, $02, 0
+
 VEC_DATA:
         .addr   BRK_DEFAULT     ; NMIVEC0
         .addr   BRK_DEFAULT     ; BRKVEC0
