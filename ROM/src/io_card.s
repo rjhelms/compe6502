@@ -144,6 +144,7 @@ BYTE_AVAIL:
 ; uses STL/STH for start/current address, L/H for end address
 
 .proc   CLOAD
+        sei
         lda     #$0A
         jsr     COUT
         lda     #<MSG_PRESS_PLAY        ; display press play message
@@ -153,7 +154,6 @@ BYTE_AVAIL:
         jsr     SHWMSG
         lda     #$00                    ; zero out checksum
         sta     CRC
-
 header:
         lda     #$09                    ; header starts with count down from
         sta     STL                     ; $09
@@ -301,6 +301,7 @@ data_checksum_bad:
         sta     MSGH
 
 end:
+        cli
         pla                             ; recover STL/STH values from stack
         sta     STH
         pla
@@ -316,6 +317,7 @@ end:
 ; uses STL/STH for start/current address, L/H for end address
 
 .proc CSAVE
+        sei
         lda     IO_VIA_PORTB            ; ensure TX is high
         ora     #IO_MASK_CAS_TX
         sta     IO_VIA_PORTB
@@ -430,6 +432,7 @@ write_data:
 done:                                   ; fallen through both checks, we're done
         lda     CRC                     ; write the final checksum
         jsr     CPUTBYTE
+        cli
 out_leader:                             ; record 5 second leader
         lda     #$32
         jsr     CLEADER
@@ -446,7 +449,6 @@ out_leader:                             ; record 5 second leader
 ; outputs byte in A register to cassette port
 
 .proc CPUTBYTE
-        sei
         phy                     ; stash A & Y regs
         pha
         ; initialize IO port for output
@@ -482,7 +484,6 @@ out_leader:                             ; record 5 second leader
         sty     IO_VIA_PORTB
         pla                     ; restore A & Y regs
         ply
-        cli
         rts
 .endproc
 
@@ -492,7 +493,6 @@ out_leader:                             ; record 5 second leader
 ; assumes IO port is in a valid state
 
 .proc CGETBYTE
-        sei
         phy
         ldy     #$08            ; init load counter
 start:
@@ -507,7 +507,6 @@ input:
         dey
         bne     input           ; keep going if not at bit 0
         ply
-        cli
         beq     CWAIT           ; else, use WAIT to get into the stop bit
 .endproc
 
@@ -521,7 +520,9 @@ CWAIT:
 
 CHALFWAIT:                      ; half the waiting time
         phy                     ; save Y
-        ldy     #$A3            ; 163 x 5us
+        nop
+        nop
+        ldy     #$4D            ; 77 x 5us
 CWAIT1:
         dey
         bne     CWAIT1
@@ -541,7 +542,7 @@ CWAIT1:
         sta     IO_VIA_PORTB
         pla
 loop1:                          ; outer loop - 1/10th of second
-        ldx     #$3C            ; 60 byte-periods
+        ldx     #$78            ; 120 byte-periods
 
 loop2:                          ; inner loop - 1 byte period
         jsr     CWAIT

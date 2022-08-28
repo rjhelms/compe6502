@@ -7,9 +7,9 @@ high_val = round(128 + (128 * intensity))
 
 SAMPLE_RATE = 9600
 SPACE_FREQ = 1200
-SPACE_CYCLES = 2
+SPACE_CYCLES = 1
 MARK_FREQ = 2400
-MARK_CYCLES = 4
+MARK_CYCLES = 2
 
 
 def generate_cycle(frequency: int) -> bytearray:
