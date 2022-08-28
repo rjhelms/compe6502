@@ -28,8 +28,9 @@
 #define CURSOR_XOR_MASK 0b10000000
 #define CURSOR_BLINK_MS 250
 
-u8 bg;
-u8 fg;
+u8 bg_color;
+u8 fg_color;
+u8 gr_color;
 
 enum DispMode
 {
@@ -58,11 +59,16 @@ enum CmdState
 } state;
 
 ALIGNED u8 textBuf[80 * 24];
-ALIGNED u8 grBuf[320 * 192 / 2];
+ALIGNED u8 grBuf0[320 * 192 / 2];
+ALIGNED u8 grBuf1[320 * 192 / 2];
 
 u8 *grPtr;
 
 u8 pal16[16];
+
+u8 grViewPage = 0;
+u8 grDrawPage = 0;
+sSegm* grSeg;
 
 bool cursorEnabled = true;
 bool cursorState = false;
@@ -271,6 +277,175 @@ void rotate_palette_backward_high()
 	GenPal16Trans(Pal16Trans, pal16);
 }
 
+void setupScreen()
+{
+	while (gpio_get(8))
+	{
+
+	}
+
+	ScreenClear(pScreen);
+	sStrip *strip;
+	sSegm *segm;
+	switch (dispMode)
+	{
+	case TEXT40:
+		strip = ScreenAddStrip(pScreen, VID_HEIGHT);
+		segm = ScreenAddSegm(strip, VID_WIDTH_LO);
+		ScreenSegmAText(segm, textBuf, FontBold8x8, 8, pal16, 80);
+		break;
+	case TEXT80:
+		strip = ScreenAddStrip(pScreen, VID_HEIGHT);
+		segm = ScreenAddSegm(strip, VID_WIDTH_HI);
+		ScreenSegmMText(segm, textBuf, FontBold8x8, 8, COL_BLACK, COL_WHITE, 80);
+		break;
+	case GR4BPP_TEXT:
+		strip = ScreenAddStrip(pScreen, (VID_HEIGHT - TEXT_BOTTOM_4_HEIGHT));
+		segm = ScreenAddSegm(strip, VID_WIDTH_LO);
+		grSeg = segm;
+		if (grViewPage == 0)
+		{
+			ScreenSegmGraph4(segm, grBuf0, Pal16Trans, VID_WIDTH_LO / 2);
+		}
+		else
+		{
+			ScreenSegmGraph4(segm, grBuf1, Pal16Trans, VID_WIDTH_LO / 2);
+		}
+		if (grDrawPage == 0)
+		{
+			Canvas.img = grBuf0;
+			grPtr = grBuf0;
+		}
+		else
+		{
+			Canvas.img = grBuf1;
+			grPtr = grBuf1;
+		}
+		Canvas.w = VID_WIDTH_LO;
+		Canvas.h = (VID_HEIGHT - TEXT_BOTTOM_4_HEIGHT);
+		Canvas.wb = VID_WIDTH_LO / 2;
+		Canvas.format = CANVAS_4;
+		strip = ScreenAddStrip(pScreen, TEXT_BOTTOM_4_HEIGHT);
+		segm = ScreenAddSegm(strip, VID_WIDTH_LO);
+		ScreenSegmAText(segm, textBuf + TEXT_OFFSET_BOTTOM_4, FontBold8x8, 8, pal16, 80);
+		break;
+	case GR1BPP_TEXT:
+		strip = ScreenAddStrip(pScreen, (VID_HEIGHT - TEXT_BOTTOM_4_HEIGHT));
+		segm = ScreenAddSegm(strip, VID_WIDTH_HI);
+		grSeg = segm;
+		if (grViewPage == 0)
+		{
+			ScreenSegmGraph1(segm, grBuf0, COL_BLACK, COL_WHITE, VID_WIDTH_HI / 8);
+		}
+		else
+		{
+			ScreenSegmGraph1(segm, grBuf1, COL_BLACK, COL_WHITE, VID_WIDTH_HI / 8);
+		}
+		if (grDrawPage == 0)
+		{
+			Canvas.img = grBuf0;
+			grPtr = grBuf0;
+		}
+		else
+		{
+			Canvas.img = grBuf1;
+			grPtr = grBuf1;
+		}
+
+		Canvas.w = VID_WIDTH_HI;
+		Canvas.h = (VID_HEIGHT - TEXT_BOTTOM_4_HEIGHT);
+		Canvas.wb = VID_WIDTH_HI / 8;
+		Canvas.format = CANVAS_1;
+
+		strip = ScreenAddStrip(pScreen, TEXT_BOTTOM_4_HEIGHT);
+		segm = ScreenAddSegm(strip, VID_WIDTH_HI);
+		ScreenSegmMText(segm, textBuf + TEXT_OFFSET_BOTTOM_4, FontBold8x8, 8, COL_BLACK, COL_WHITE, 80);
+		break;
+	case GR8BPP:
+		strip = ScreenAddStrip(pScreen, (VID_HEIGHT));
+		segm = ScreenAddSegm(strip, VID_WIDTH_XS);
+		grSeg = segm;
+		if (grViewPage == 0)
+		{
+			ScreenSegmGraph8(segm, grBuf0, VID_WIDTH_XS);
+		}
+		else
+		{
+			ScreenSegmGraph8(segm, grBuf1, VID_WIDTH_XS);
+		}
+		if (grDrawPage == 0)
+		{
+			Canvas.img = grBuf0;
+			grPtr = grBuf0;
+		}
+		else
+		{
+			Canvas.img = grBuf1;
+			grPtr = grBuf1;
+		}
+		Canvas.w = VID_WIDTH_XS;
+		Canvas.h = (VID_HEIGHT);
+		Canvas.wb = VID_WIDTH_XS;
+		Canvas.format = CANVAS_8;
+		break;
+	case GR4BPP:
+		strip = ScreenAddStrip(pScreen, (VID_HEIGHT));
+		segm = ScreenAddSegm(strip, VID_WIDTH_LO);
+		grSeg = segm;
+		if (grViewPage == 0)
+		{
+			ScreenSegmGraph4(segm, grBuf0, Pal16Trans, VID_WIDTH_LO / 2);
+		}
+		else
+		{
+			ScreenSegmGraph4(segm, grBuf1, Pal16Trans, VID_WIDTH_LO / 2);
+		}
+		if (grDrawPage == 0)
+		{
+			Canvas.img = grBuf0;
+			grPtr = grBuf0;
+		}
+		else
+		{
+			Canvas.img = grBuf1;
+			grPtr = grBuf1;
+		}
+
+		Canvas.w = VID_WIDTH_LO;
+		Canvas.h = (VID_HEIGHT);
+		Canvas.wb = VID_WIDTH_LO / 2;
+		Canvas.format = CANVAS_4;
+		break;
+	case GR1BPP:
+		strip = ScreenAddStrip(pScreen, (VID_HEIGHT));
+		segm = ScreenAddSegm(strip, VID_WIDTH_HI);
+		grSeg = segm;
+		if (grViewPage == 0)
+		{
+			ScreenSegmGraph1(segm, grBuf0, COL_BLACK, COL_WHITE, VID_WIDTH_HI / 8);
+		}
+		else
+		{
+			ScreenSegmGraph1(segm, grBuf1, COL_BLACK, COL_WHITE, VID_WIDTH_HI / 8);
+		}
+		if (grDrawPage == 0)
+		{
+			Canvas.img = grBuf0;
+			grPtr = grBuf0;
+		}
+		else
+		{
+			Canvas.img = grBuf1;
+			grPtr = grBuf1;
+		}
+		Canvas.w = VID_WIDTH_HI;
+		Canvas.h = (VID_HEIGHT);
+		Canvas.wb = VID_WIDTH_HI / 8;
+		Canvas.format = CANVAS_1;
+		break;
+	}
+}
+
 void configure_vid(u16 width, u16 wfull)
 {
 	VgaCfgDef(&Cfg);
@@ -287,125 +462,56 @@ void configure_vid(u16 width, u16 wfull)
 void cmd_f0_set_mode_text40()
 {
 	configure_vid(VID_WIDTH_LO, VID_WFULL_LO);
-	ScreenClear(pScreen);
-	sStrip *strip = ScreenAddStrip(pScreen, VID_HEIGHT);
-	sSegm *segm = ScreenAddSegm(strip, VID_WIDTH_LO);
-	ScreenSegmAText(segm, textBuf, FontBold8x8, 8, pal16, 80);
-	PrintSetup(textBuf, 40, 24, 80);
-	PrintSetCol(PC_COLOR(bg, fg));
 	dispMode = TEXT40;
+	setupScreen();
+	PrintSetup(textBuf, 40, 24, 80);
+	PrintSetCol(PC_COLOR(bg_color, fg_color));
 }
 
 void cmd_f1_set_mode_text80()
 {
 	configure_vid(VID_WIDTH_HI, VID_WFULL_HI);
-	ScreenClear(pScreen);
-	sStrip *strip = ScreenAddStrip(pScreen, VID_HEIGHT);
-	sSegm *segm = ScreenAddSegm(strip, VID_WIDTH_HI);
-	ScreenSegmMText(segm, textBuf, FontBold8x8, 8, COL_BLACK, COL_WHITE, 80);
-	PrintSetup(textBuf, 80, 24, 80);
 	dispMode = TEXT80;
+	setupScreen();
+	PrintSetup(textBuf, 80, 24, 80);
 }
 
 void cmd_f2_set_mode_gr4_text()
 {
 	configure_vid(VID_WIDTH_LO, VID_WFULL_LO);
-	ScreenClear(pScreen);
-
-	sStrip *strip = ScreenAddStrip(pScreen, (VID_HEIGHT - TEXT_BOTTOM_4_HEIGHT));
-	sSegm *segm = ScreenAddSegm(strip, VID_WIDTH_LO);
-	ScreenSegmGraph4(segm, grBuf, Pal16Trans, VID_WIDTH_LO / 2);
-	Canvas.img = grBuf;
-	Canvas.w = VID_WIDTH_LO;
-	Canvas.h = (VID_HEIGHT - TEXT_BOTTOM_4_HEIGHT);
-	Canvas.wb = VID_WIDTH_LO / 2;
-	Canvas.format = CANVAS_4;
-
-	grPtr = grBuf;
-
-	strip = ScreenAddStrip(pScreen, TEXT_BOTTOM_4_HEIGHT);
-	segm = ScreenAddSegm(strip, VID_WIDTH_LO);
-	ScreenSegmAText(segm, textBuf + TEXT_OFFSET_BOTTOM_4, FontBold8x8, 8, pal16, 80);
-	PrintSetup(textBuf + TEXT_OFFSET_BOTTOM_4, 40, 4, 80);
-	PrintSetCol(PC_COLOR(bg, fg));
 	dispMode = GR4BPP_TEXT;
+	setupScreen();
+	PrintSetup(textBuf + TEXT_OFFSET_BOTTOM_4, 40, 4, 80);
+	PrintSetCol(PC_COLOR(bg_color, fg_color));
 }
 
 void cmd_f3_set_mode_gr1_text()
 {
 	configure_vid(VID_WIDTH_HI, VID_WFULL_HI);
-	ScreenClear(pScreen);
-
-	sStrip *strip = ScreenAddStrip(pScreen, (VID_HEIGHT - TEXT_BOTTOM_4_HEIGHT));
-	sSegm *segm = ScreenAddSegm(strip, VID_WIDTH_HI);
-	ScreenSegmGraph1(segm, grBuf, COL_BLACK, COL_WHITE, VID_WIDTH_HI / 8);
-	Canvas.img = grBuf;
-	Canvas.w = VID_WIDTH_HI;
-	Canvas.h = (VID_HEIGHT - TEXT_BOTTOM_4_HEIGHT);
-	Canvas.wb = VID_WIDTH_HI / 8;
-	Canvas.format = CANVAS_1;
-
-	grPtr = grBuf;
-
-	strip = ScreenAddStrip(pScreen, TEXT_BOTTOM_4_HEIGHT);
-	segm = ScreenAddSegm(strip, VID_WIDTH_HI);
-	ScreenSegmMText(segm, textBuf + TEXT_OFFSET_BOTTOM_4, FontBold8x8, 8, COL_BLACK, COL_WHITE, 80);
-	PrintSetup(textBuf + TEXT_OFFSET_BOTTOM_4, 80, 4, 80);
 	dispMode = GR1BPP_TEXT;
+	setupScreen();
+	PrintSetup(textBuf + TEXT_OFFSET_BOTTOM_4, 80, 4, 80);
 }
 
 void cmd_f4_set_mode_gr8()
 {
 	configure_vid(VID_WIDTH_XS, VID_WFULL_XS);
-	ScreenClear(pScreen);
-
-	sStrip *strip = ScreenAddStrip(pScreen, (VID_HEIGHT));
-	sSegm *segm = ScreenAddSegm(strip, VID_WIDTH_XS);
-	ScreenSegmGraph8(segm, grBuf, VID_WIDTH_XS);
-	Canvas.img = grBuf;
-	Canvas.w = VID_WIDTH_XS;
-	Canvas.h = (VID_HEIGHT);
-	Canvas.wb = VID_WIDTH_XS;
-	Canvas.format = CANVAS_8;
-
-	grPtr = grBuf;
 	dispMode = GR8BPP;
+	setupScreen();
 }
 
 void cmd_f6_set_mode_gr4()
 {
 	configure_vid(VID_WIDTH_LO, VID_WFULL_LO);
-	ScreenClear(pScreen);
-
-	sStrip *strip = ScreenAddStrip(pScreen, (VID_HEIGHT));
-	sSegm *segm = ScreenAddSegm(strip, VID_WIDTH_LO);
-	ScreenSegmGraph4(segm, grBuf, Pal16Trans, VID_WIDTH_LO / 2);
-	Canvas.img = grBuf;
-	Canvas.w = VID_WIDTH_LO;
-	Canvas.h = (VID_HEIGHT);
-	Canvas.wb = VID_WIDTH_LO / 2;
-	Canvas.format = CANVAS_4;
-
-	grPtr = grBuf;
 	dispMode = GR4BPP;
+	setupScreen();
 }
 
 void cmd_f7_set_mode_gr1()
 {
 	configure_vid(VID_WIDTH_HI, VID_WFULL_HI);
-	ScreenClear(pScreen);
-
-	sStrip *strip = ScreenAddStrip(pScreen, (VID_HEIGHT));
-	sSegm *segm = ScreenAddSegm(strip, VID_WIDTH_HI);
-	ScreenSegmGraph1(segm, grBuf, COL_BLACK, COL_WHITE, VID_WIDTH_HI / 8);
-	Canvas.img = grBuf;
-	Canvas.w = VID_WIDTH_HI;
-	Canvas.h = (VID_HEIGHT);
-	Canvas.wb = VID_WIDTH_HI / 8;
-	Canvas.format = CANVAS_1;
-
-	grPtr = grBuf;
 	dispMode = GR1BPP;
+	setupScreen();
 }
 
 void init_gpio()
@@ -440,9 +546,9 @@ void init_gpio()
 void cmd_ff_reset_display()
 {
 	cmd_f0_set_mode_text40();
-	bg = PC_BLACK;
-	fg = PC_WHITE;
-	PrintSetCol(PC_COLOR(bg, fg));
+	bg_color = PC_BLACK;
+	fg_color = PC_WHITE;
+	PrintSetCol(PC_COLOR(bg_color, fg_color));
 	PrintClear();
 	PrintHome();
 	dispMode = TEXT40;
@@ -450,6 +556,7 @@ void cmd_ff_reset_display()
 	cursorEnabled = true;
 	cursorState = false;
 	cursorNextBlink = make_timeout_time_ms(CURSOR_BLINK_MS);
+	grViewPage = 0;
 }
 
 // set GPIO direction - false for read, true for write
@@ -487,6 +594,7 @@ void write_single_byte(u8 val)
 	write_byte(val);
 	set_direction(false);
 }
+
 u8 read_byte()
 {
 	u8 val = 0;
@@ -519,6 +627,105 @@ u8 read_byte_blocking()
 	return read_byte();
 }
 
+void cmd_b2_draw_pixel()
+{
+	u8 x_lo = read_byte_blocking();
+	u8 x_hi = read_byte_blocking();
+	u8 y_lo = read_byte_blocking();
+	u8 y_hi = read_byte_blocking();
+	DrawPoint(&Canvas, x_lo + (x_hi << 8), y_lo + (y_hi << 8), gr_color);
+}
+
+void cmd_b3_get_pixel()
+{
+	u8 result = 0;
+
+	u8 x_lo = read_byte_blocking();
+	u8 x_hi = read_byte_blocking();
+	u8 y_lo = read_byte_blocking();
+	u8 y_hi = read_byte_blocking();
+
+	int x = x_lo + (x_hi << 8);
+	int y = y_lo + (y_hi << 8);
+
+	u8 *d;
+
+	switch ((&Canvas)->format)
+	{
+	case CANVAS_8:
+		result = (&Canvas)->img[x + y * (&Canvas)->wb];
+		break;
+	case CANVAS_4:
+		d = (&Canvas)->img + x / 2 + y * (&Canvas)->wb;
+		if ((x & 1) == 0) // first pixel
+		{
+			result = *d >> 4;
+		}
+		else
+		{ // second pixel
+			result = *d & 0xF;
+		}
+		break;
+	case CANVAS_1:
+		d = (&Canvas)->img + x / 8 + y * (&Canvas)->wb;
+		switch (x & 7)
+		{
+		case 0:
+			result = (*d & 0x80) >> 7;
+			break;
+		case 1:
+			result = (*d & 0x40) >> 6;
+			break;
+		case 2:
+			result = (*d & 0x20) >> 5;
+			break;
+		case 3:
+			result = (*d & 0x10) >> 4;
+			break;
+		case 4:
+			result = (*d & 0x08) >> 3;
+			break;
+		case 5:
+			result = (*d & 0x04) >> 2;
+			break;
+		case 6:
+			result = (*d & 0x02) >> 1;
+			break;
+		case 7:
+			result = (*d & 0x01);
+			break;
+		}
+		break;
+	}
+	write_single_byte(result);
+}
+
+void cmd_b4_draw_line()
+{
+	u8 x1_lo = read_byte_blocking();
+	u8 x1_hi = read_byte_blocking();
+	u8 y1_lo = read_byte_blocking();
+	u8 y1_hi = read_byte_blocking();
+	u8 x2_lo = read_byte_blocking();
+	u8 x2_hi = read_byte_blocking();
+	u8 y2_lo = read_byte_blocking();
+	u8 y2_hi = read_byte_blocking();
+	DrawLine(&Canvas, x1_lo + (x1_hi << 8), y1_lo + (y1_hi << 8), x2_lo + (x2_hi << 8), y2_lo + (y2_hi << 8), gr_color);
+}
+
+void cmd_b5_draw_rect()
+{
+	u8 x1_lo = read_byte_blocking();
+	u8 x1_hi = read_byte_blocking();
+	u8 y1_lo = read_byte_blocking();
+	u8 y1_hi = read_byte_blocking();
+	u8 x2_lo = read_byte_blocking();
+	u8 x2_hi = read_byte_blocking();
+	u8 y2_lo = read_byte_blocking();
+	u8 y2_hi = read_byte_blocking();
+	DrawRect(&Canvas, x1_lo + (x1_hi << 8), y1_lo + (y1_hi << 8), x2_lo + (x2_hi << 8), y2_lo + (y2_hi << 8), gr_color);
+}
+
 void cmd_c8_blit_bytestream()
 {
 	u8 startx = read_byte_blocking();
@@ -526,7 +733,14 @@ void cmd_c8_blit_bytestream()
 	u8 w = read_byte_blocking();
 	u8 h = read_byte_blocking();
 
-	grPtr = grBuf;
+	if (grViewPage = 0)
+	{
+		grPtr = grBuf0;
+	}
+	else
+	{
+		grPtr = grBuf1;
+	}
 	grPtr += starty * Canvas.wb;
 	grPtr += startx;
 
@@ -541,6 +755,28 @@ void cmd_c8_blit_bytestream()
 	}
 }
 
+void cmd_cc_set_view_page(u8 page)
+{
+	grViewPage = page;
+	if (page == 0)
+	{
+		grSeg->data = grBuf0;
+	} else {
+		grSeg->data = grBuf1;
+	}
+}
+
+void cmd_ce_set_draw_page(u8 page)
+{
+	grDrawPage = page;
+	if (page == 0)
+	{
+		Canvas.img = grBuf0;
+	} else {
+		Canvas.img = grBuf1;
+	}
+}
+
 void cmd_e2_set_all_text_fg()
 {
 	if (dispMode != TEXT40 && dispMode != GR4BPP_TEXT)
@@ -549,7 +785,7 @@ void cmd_e2_set_all_text_fg()
 	}
 	for (int i = 1; i < (80 * 24); i += 2)
 	{
-		textBuf[i] = (textBuf[i] & 0xF0) + fg;
+		textBuf[i] = (textBuf[i] & 0xF0) + fg_color;
 	}
 }
 
@@ -557,7 +793,7 @@ void cmd_e3_set_all_text_bg()
 {
 	for (int i = 1; i < (80 * 24); i += 2)
 	{
-		textBuf[i] = (textBuf[i] & 0x0F) + (bg << 4);
+		textBuf[i] = (textBuf[i] & 0x0F) + (bg_color << 4);
 	}
 }
 
@@ -652,14 +888,14 @@ int main()
 				break;
 
 			case CMD_E0_SET_FG:
-				fg = last_byte & 0x0F;
-				PrintSetCol(PC_COLOR(bg, fg));
+				fg_color = last_byte & 0x0F;
+				PrintSetCol(PC_COLOR(bg_color, fg_color));
 				state = DEFAULT;
 				break;
 
 			case CMD_E1_SET_BG:
-				bg = last_byte & 0x0F;
-				PrintSetCol(PC_COLOR(bg, fg));
+				bg_color = last_byte & 0x0F;
+				PrintSetCol(PC_COLOR(bg_color, fg_color));
 				state = DEFAULT;
 				break;
 
@@ -669,11 +905,38 @@ int main()
 				case 0x02: // enter text mode
 					state = TEXT;
 					break;
+				case 0xB0: // set drawing color
+					gr_color = read_byte_blocking();
+					break;
+				case 0xB1: // get drawing color
+					write_single_byte(gr_color);
+					break;
+				case 0xB2: // draw single pixel
+					cmd_b2_draw_pixel();
+					break;
+				case 0xB4: // draw line
+					cmd_b4_draw_line();
+					break;
+				case 0xB5: // draw box
+					cmd_b5_draw_rect();
+					break;
 				case 0xC0: // push graphics byte
 					state = CMD_C0_PUSH_GR_BYTE;
 					break;
 				case 0xC8: // blit bytestream;
 					cmd_c8_blit_bytestream();
+					break;
+				case 0xCC: // set view page 0
+					cmd_cc_set_view_page(0);
+					break;
+				case 0xCD: // set view page 1
+					cmd_cc_set_view_page(1);
+					break;
+				case 0xCE: // set draw page 0
+					cmd_ce_set_draw_page(0);
+					break;
+				case 0xCF: // set draw page 1
+					cmd_ce_set_draw_page(1);
 					break;
 				case 0xD0: // write single text char
 					state = CMD_D0_WRITE_CHAR;
@@ -714,30 +977,30 @@ int main()
 				case 0xE1: // set background color
 					state = CMD_E1_SET_BG;
 					break;
-				case 0xE2: // set all text to fg
+				case 0xE2: // set all text to fg_color
 					cmd_e2_set_all_text_fg();
 					break;
-				case 0xE3: // set all text to bg
+				case 0xE3: // set all text to bg_color
 					cmd_e3_set_all_text_bg();
 					break;
-				case 0xE4: // get current fg - returns 15 in mono modes
+				case 0xE4: // get current fg_color - returns 15 in mono modes
 					if (dispMode == TEXT80 || dispMode == GR1BPP_TEXT)
 					{
 						write_single_byte(0x0F);
 					}
 					else
 					{
-						write_single_byte(fg);
+						write_single_byte(fg_color);
 					}
 					break;
-				case 0xE5: // get current bg - returns 0 in mono modes
+				case 0xE5: // get current bg_color - returns 0 in mono modes
 					if (dispMode == TEXT80 || dispMode == GR1BPP_TEXT)
 					{
 						write_single_byte(0x00);
 					}
 					else
 					{
-						write_single_byte(bg);
+						write_single_byte(bg_color);
 					}
 					break;
 				case 0xE8: // rotate palette forward

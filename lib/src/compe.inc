@@ -73,6 +73,7 @@ B_VRAM_CLEAR    = $FF4E
 B_COUT_NO_CC    = $FF51
 B_COUT          = $FF54
 B_VIDEO_INIT    = $FF57
+B_RESET_VMODE   = $FF5A
 B_COLDSTART     = $FF5D
 
 ; vector table

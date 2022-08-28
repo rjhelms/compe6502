@@ -21,6 +21,8 @@ CHK_BYTE = <ROM_VER ^ >ROM_VER
 
 .import         BASIC_COLD, BASIC_WARM
 
+.import         VIDEO_DATA
+
 VECT_TAB_LEN    = VECT_TAB_START - VECT_TAB_END
 
 .export         IRQ_VECTOR, NMI_VECTOR
@@ -69,7 +71,7 @@ jumptable       B_VRAM_CLEAR,           VRAM_CLEAR
 jumptable       B_COUT_NO_CC,           COUT_NO_CC
 jumptable       B_COUT,                 COUT
 jumptable       B_VIDEO_INIT,           VIDEO_INIT
-jumptable       B_Reserve30,            RESERVE
+jumptable       B_RESET_VMODE,          RESET_VMODE
 
 .export B_COLDSTART
 
@@ -178,6 +180,7 @@ DO_BRK:                 ; else, call BRK soft vector
         stx PCL         ; and store on zero page
         ply
         sty PCH
+        jsr RESET_VMODE
         jsr PRSTATUS
         jmp (BRKRET0)   ; jump to return vector
 .endproc
