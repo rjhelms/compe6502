@@ -203,7 +203,7 @@ int main()
         color_outline = TGI_COLOR_WHITE;
         color_hour = TGI_COLOR_WHITE;
         color_minute = TGI_COLOR_WHITE;
-        color_second = 5;
+        color_second = TGI_COLOR_RED;
     } else if (tgi_getcolorcount() == 0)
     {
         color_outline = 0x92;
@@ -251,7 +251,7 @@ int main()
         draw_hand((hours * 30) + (minutes / 2), hours_rx, hours_ry);
         tgi_setcolor(color_minute);
         draw_hand((minutes * 6) + (seconds / 10), minutes_rx, minutes_ry);
-        tgi_setcolor(color_second); // TODO - make TGI_COLOR, check for color depth
+        tgi_setcolor(color_second);
         draw_hand((seconds * 6) + (sixtieths / 10), seconds_rx, seconds_ry);
         tgi_setcolor(color_outline);
         for (i = 0; i < 24; ++i)
