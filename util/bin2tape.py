@@ -7,10 +7,12 @@ high_val = round(128 + (128 * intensity))
 
 SAMPLE_RATE = 9600
 SPACE_FREQ = 1200
-SPACE_CYCLES = 1
+SPACE_CYCLES = 2
 MARK_FREQ = 2400
-MARK_CYCLES = 2
+MARK_CYCLES = 4
 
+SLOW_SPEED = 0xA3
+FAST_SPEED = 0x4D
 
 def generate_cycle(frequency: int) -> bytearray:
     """Generates one wave cycle at the specified frequency"""
@@ -67,7 +69,7 @@ def generate_leader(duration: float) -> bytearray:
 
 
 def generate_header(name: str, start_addr: int, 
-                    end_addr: int, verbose: bool) -> bytearray:
+                    end_addr: int, verbose: bool, slow: bool) -> bytearray:
     """Generates a tape header with the specified file name
 
     Tape header consists of bytes 0x09 to 0x00 in descending order, then the
@@ -99,6 +101,13 @@ def generate_header(name: str, start_addr: int,
     result.extend(generate_byte(end_addr >> 8))
     checksum += end_addr >> 8
 
+    if slow:
+        result.extend(generate_byte(SLOW_SPEED))
+        checksum += SLOW_SPEED
+    else:
+        result.extend(generate_byte(FAST_SPEED))
+        checksum += FAST_SPEED
+
     if verbose:
         print(f"Header checksum: 0x{checksum & 0xFF:02X}")
 
@@ -111,6 +120,7 @@ def main():
     parser.add_argument("in_file")
     parser.add_argument("start_address")
     parser.add_argument("out_file", nargs="?")
+    parser.add_argument("--slow", action="store_true")
     parser.add_argument("--name", nargs="?")
     parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args()
@@ -143,8 +153,15 @@ def main():
         file.setframerate(SAMPLE_RATE)
         array = bytearray()
         array.extend(generate_leader(5))
-        array.extend(generate_header(args.name, start_addr, end_addr, args.verbose))
+        array.extend(generate_header(args.name, start_addr, end_addr, args.verbose, args.slow))
         array.extend(generate_leader(1))
+
+        global MARK_CYCLES
+        global SPACE_CYCLES
+
+        if not args.slow:
+            MARK_CYCLES = 2
+            SPACE_CYCLES = 1
 
         file_data = in_file.read()
         checksum = 0

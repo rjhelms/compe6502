@@ -4,6 +4,7 @@
 .include "asminc/slot_defs.inc"
 
 TIMER_COUNT = 15625     ; 64 ticks per second with a 1 MHz clock
+CSPEED_DEFAULT = $A3    ; 600bps delay
 
 .export IO_VIA_START    = SLOT0
 .export IO_VIA_PORTB    = IO_VIA_START + $00
@@ -41,6 +42,10 @@ TIMER_COUNT = 15625     ; 64 ticks per second with a 1 MHz clock
 .export IO_IER_TIMER1  = %01000000
 
 .export IO_PCR_CA2_HANDSHAKE    = %00001000
+
+.segment "ZEROPAGE"
+
+CSPEED: .res 1
 
 .segment "SD_WORK"
 
@@ -145,6 +150,8 @@ BYTE_AVAIL:
 
 .proc   CLOAD
         sei
+        lda     #CSPEED_DEFAULT         ; set default casette speed
+        sta     CSPEED
         lda     #$0A
         jsr     COUT
         lda     #<MSG_PRESS_PLAY        ; display press play message
@@ -220,6 +227,12 @@ get_addr:
         adc     CRC
         sta     CRC
 
+get_cspeed:
+        jsr     CGETBYTE                ; get speed & push to stack
+        pha
+        clc
+        adc     CRC
+        sta     CRC
 checksum:
         jsr     CGETBYTE                ; get and validate the checksum
         cmp     CRC
@@ -236,9 +249,12 @@ header_checksum_bad:
         lda     #>MSG_CHECKSUM_FAIL
         sta     MSGH
         jsr     SHWMSG
+        pla                             ; pull CSPEED from stack so RTS works
         rts
 
 header_end:
+        pla                             ; pull CSPEED from stack and set it
+        sta     CSPEED
         jsr     SHWMSG                  ; output the details from the header
         lda     #<LOAD_PAGE             ; file name
         sta     MSGL
@@ -318,6 +334,9 @@ end:
 
 .proc CSAVE
         sei
+        lda     #CSPEED_DEFAULT         ; set default speed
+        sta     CSPEED
+
         lda     IO_VIA_PORTB            ; ensure TX is high
         ora     #IO_MASK_CAS_TX
         sta     IO_VIA_PORTB
@@ -390,6 +409,13 @@ store_addr:
         sta     CRC
 
         lda     H
+        jsr     CPUTBYTE
+        clc
+        adc     CRC
+        sta     CRC
+
+store_cspeed:
+        lda     CSPEED
         jsr     CPUTBYTE
         clc
         adc     CRC
@@ -522,7 +548,7 @@ CHALFWAIT:                      ; half the waiting time
         phy                     ; save Y
         nop
         nop
-        ldy     #$4D            ; 77 x 5us
+        ldy     CSPEED
 CWAIT1:
         dey
         bne     CWAIT1
@@ -542,7 +568,7 @@ CWAIT1:
         sta     IO_VIA_PORTB
         pla
 loop1:                          ; outer loop - 1/10th of second
-        ldx     #$78            ; 120 byte-periods
+        ldx     #$3C            ; 60 byte-periods
 
 loop2:                          ; inner loop - 1 byte period
         jsr     CWAIT

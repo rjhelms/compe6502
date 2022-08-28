@@ -2,11 +2,12 @@ Compé6502 Cassette format
 
 5 seconds leader
 
-header:
+header - always recorded at 600bps
 	synchronization bytes: 0x09 0x08 0x07 0x06 0x05 0x04 0x03 0x02 0x01 0x00
 	file name: 8 bytes, padded with 0x00
 	start address: two bytes, low byte first
 	end address+1: two bytes, low byte first
+	speed: one byte, 0xA3 for 600bps or 0x4D for 1200bps
 	header checksum (including sync)
 	
 1 second leader
