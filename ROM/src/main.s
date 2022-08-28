@@ -87,13 +87,7 @@ jumptable       B_RESET_VMODE,          RESET_VMODE
         jsr TIMER_INIT          ; need to initialize timer again on reset
         jmp (WARMRESET)         
                                 ; otherwise, continue with startup
-:       jsr VRAM_TEST
-        jsr VRAM_CLEAR_FULL
-        lda #<MSG_VRAM_OK
-        sta MSGL
-        lda #>MSG_VRAM_OK
-        sta MSGH
-        jsr SHWMSG
+:       jsr VRAM_CLEAR_FULL
 
         lda #<MSG_MEM_TEST
         sta MSGL
@@ -186,7 +180,6 @@ DO_BRK:                 ; else, call BRK soft vector
 .endproc
 
 .segment "RODATA"
-MSG_VRAM_OK:    .byte "VRAM OK", $0A, $00
 MSG_MEM_TEST:   .byte "RAM TEST ", $00
 MSG_MEM_ROM_VER:
                 .byte "ROM CHECKSUM ", $00
