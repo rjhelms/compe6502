@@ -75,7 +75,7 @@ DEFPALETTE:     .byte $00, $02, $14, $16, $A0, $A2, $A8, $B6
 ; 0 and 1 from the 1bpp driver. Byte swap shenanigans put white at index 1 in
 ; TGI while keeping it at 15 elsewhere.
 
-TGI2COL:        .byte $00, $0F, $01, $02, $03, $05, $05, $06
+TGI2COL:        .byte $00, $0F, $01, $02, $03, $04, $05, $06
                 .byte $07, $08, $09, $0A, $0B, $0C, $0D, $0E
 
 COL2TGI:        .byte $00, $02, $03, $04, $05, $06, $07, $08
