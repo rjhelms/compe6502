@@ -13,10 +13,11 @@ TARGET = $(BIN)/$(PROJECT).bin
 HEXFILE = $(BIN)/$(PROJECT).hex
 WAVE = $(BIN)/$(PROJECT).wav
 
+MODE = DEFAULT
 LIB = ../../lib/compe6502.lib
 CONFIG = ../../lib/compe6502_RAM.cfg
 CC65_INC = ../../include
-CC_FLAGS = -Osir -I $(CC65_INC) --add-source
+CC_FLAGS = -Osir -I $(CC65_INC) --add-source -D $(MODE)
 CA_FLAGS =
 LD_FLAGS = 
 
