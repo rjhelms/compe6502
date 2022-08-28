@@ -17,7 +17,7 @@
 
 #define TICKS_PER_SIXTIETH 0x00F0 // 0.9375
 
-#ifdef _8PP
+#ifdef _8BPP
     extern const void compe_8bpp_tgi[];
 #elif _4BPP
     extern const void compe_4bpp_tgi[];
@@ -53,6 +53,10 @@ unsigned int center_y;
 
 unsigned char i;
 unsigned char page;
+unsigned char color_outline;
+unsigned char color_hour;
+unsigned char color_minute;
+unsigned char color_second;
 
 char in_char;
 char in_buf[32];
@@ -181,11 +185,11 @@ int main()
     build_tables();
     set_time();
 
-    #ifdef _8PP
+    #ifdef _8BPP
         tgi_install(compe_8bpp_tgi);
     #elif _4BPP
         tgi_install(compe_4bpp_tgi);
-    #elif _1BFF
+    #elif _1BPP
         tgi_install(compe_1bpp_tgi);
     #else
         tgi_install(tgi_static_stddrv);
@@ -194,6 +198,24 @@ int main()
     tgi_init();
     tgi_clear();
 
+    if (tgi_getcolorcount() == 16)
+    {
+        color_outline = TGI_COLOR_WHITE;
+        color_hour = TGI_COLOR_WHITE;
+        color_minute = TGI_COLOR_WHITE;
+        color_second = 5;
+    } else if (tgi_getcolorcount() == 0)
+    {
+        color_outline = 0x92;
+        color_hour = 0xFF;
+        color_minute = 0xFF;
+        color_second = 0xE0;
+    } else {
+        color_outline = TGI_COLOR_WHITE;
+        color_hour = TGI_COLOR_WHITE;
+        color_minute = TGI_COLOR_WHITE;
+        color_second = TGI_COLOR_WHITE;
+    }
     center_x = tgi_getxres() >> 1;
     center_y = tgi_getyres() >> 1;
 
@@ -225,12 +247,13 @@ int main()
         }
         tgi_setdrawpage(page);
         tgi_clear();
-        tgi_setcolor(TGI_COLOR_WHITE);
+        tgi_setcolor(color_hour);
         draw_hand((hours * 30) + (minutes / 2), hours_rx, hours_ry);
+        tgi_setcolor(color_minute);
         draw_hand((minutes * 6) + (seconds / 10), minutes_rx, minutes_ry);
-        tgi_setcolor(13); // TODO - make TGI_COLOR, check for color depth
+        tgi_setcolor(color_second); // TODO - make TGI_COLOR, check for color depth
         draw_hand((seconds * 6) + (sixtieths / 10), seconds_rx, seconds_ry);
-        tgi_setcolor(TGI_COLOR_WHITE);
+        tgi_setcolor(color_outline);
         for (i = 0; i < 24; ++i)
         {
             tgi_line(ellipse_x[i], ellipse_y[i],
