@@ -16,7 +16,7 @@ WAVE = $(BIN)/$(PROJECT).wav
 LIB = ../../lib/compe6502.lib
 CONFIG = ../../lib/compe6502_RAM.cfg
 CC65_INC = ../../include
-CC_FLAGS = -O -I $(CC65_INC)
+CC_FLAGS = -Osir -I $(CC65_INC) --add-source -Cl
 CA_FLAGS =
 
 START_ADDRESS = 0x600

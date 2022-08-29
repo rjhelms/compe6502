@@ -21,7 +21,7 @@ char input = 0;
 char *word;
 unsigned char word_length = 0;
 unsigned char guess = 0;
-
+unsigned char i;
 char *word_ptr[256];
 bool letters_guessed[26];
 bool word_found[16];
@@ -29,8 +29,8 @@ bool game_won;
 
 void build_word_ptr()
 {
-    unsigned char i = 0;
     char *j = word_list;
+    i = 0;
 
     // first pointer is at word_list
     word_ptr[i] = j;
@@ -79,7 +79,7 @@ void welcome()
 
 void init_game()
 {
-    unsigned char i = 0;
+    i = 0;
     word_index = rand() >> 8;
     word = word_ptr[word_index];
     guess = 0;
@@ -116,7 +116,7 @@ void draw_hangman()
 // draw the game screen
 void draw_screen()
 {
-    unsigned char i = 0;
+    i = 0;
     bgcolor(COLOR_BLACK);
     textcolor(COLOR_WHITE);
     clrscr();
@@ -166,8 +166,11 @@ char get_guess()
 
 unsigned char check_guess()
 {
-    unsigned char matches = 0;
-    unsigned char i = 0;
+    unsigned char matches;
+    
+    i = 0;
+    matches = 0;
+    
     for (i = 0; i < word_length; i++)
     {
         if (word[i] == input)

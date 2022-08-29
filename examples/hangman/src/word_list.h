@@ -1,4 +1,4 @@
-char word_list[]  = 
+const char word_list[]  = 
 {
     "abiding\0"
     "able\0"
