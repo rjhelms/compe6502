@@ -30,7 +30,7 @@ int main(void)
 {
 	// DIR dir;	 /* Directory object */
 	// FILINFO fno; /* File information object */
-	UINT br, i;
+	UINT i;
 	FRESULT rc;
 
 	do
@@ -56,7 +56,7 @@ int main(void)
 	*(unsigned char *)VIDEO_DATA = 0xFF; // reset video buffer
 	for (;;)
 	{
-		rc = pf_read(&br); 		 /* Read a chunk of file */
+		rc = pf_read(); 		 /* Read a chunk of file */
 		if (rc || !br)
 			break;				 /* Error or end of file */
 		for (i = 0; i < br; i++) /* Type the data */
