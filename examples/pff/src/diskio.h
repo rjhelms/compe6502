@@ -16,18 +16,18 @@ extern "C"
     typedef BYTE DSTATUS;
 
     /* Results of Disk Functions */
-    typedef enum
-    {
-        RES_OK = 0, /* 0: Function succeeded */
-        RES_ERROR,  /* 1: Disk error */
-        RES_NOTRDY, /* 2: Not ready */
-        RES_PARERR  /* 3: Invalid parameter */
-    } DRESULT;
+    typedef BYTE DRESULT;
+
+    #define RES_OK     0 /* 0: Function succeeded */
+    #define RES_ERROR  1 /* 1: Disk error */
+    #define RES_NOTRDY 2 /* 2: Not ready */
+    #define RES_PARERR 3 /* 3: Invalid parameter */
 
     extern DWORD sector;
     extern UINT offset;
     extern UINT count;
-
+    extern DRESULT result;
+    
     /*---------------------------------------*/
     /* Prototypes for disk control functions */
 

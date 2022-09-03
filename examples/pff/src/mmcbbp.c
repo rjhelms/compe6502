@@ -106,10 +106,17 @@ void dly_us(unsigned int n)
 #define CT_BLOCK 0x08            /* Block addressing */
 
 static BYTE CardType; /* b0:MMC, b1:SDv1, b2:SDv2, b3:Block addressing */
-BYTE data_byte;       // byte to send
-BYTE cmd;             // command byte
-BYTE tmp_cmd;         // temp location to stash command for ACMD
 
+DRESULT result;
+
+/* BSS variables for multiple methods */
+BYTE data_byte; // byte sent or received
+UINT tmr;       // counter for skip_mmc & time-outs
+BYTE n;
+
+/* BSS variables for send_cmd */
+BYTE cmd;      // command byte
+BYTE tmp_cmd;  // temp location to stash command for ACMD
 DWORD arg;     // argument for command
 DWORD tmp_arg; // temporary location to stash arg for ACMD
 
@@ -230,9 +237,7 @@ static void rcvr_mmc(void)
 /* Skip bytes on the MMC (bitbanging)                                    */
 /*-----------------------------------------------------------------------*/
 
-static void skip_mmc(
-    UINT n /* Number of bytes to skip */
-)
+static void skip_mmc()
 {
     DI_H(); /* Send 0xFF */
 
@@ -254,7 +259,7 @@ static void skip_mmc(
         CK_L();
         CK_H();
         CK_L();
-    } while (--n);
+    } while (--tmr);
 }
 
 /*-----------------------------------------------------------------------*/
@@ -273,7 +278,6 @@ static void release_spi(void)
 
 static BYTE send_cmd()
 {
-    BYTE n;
     if (cmd & 0x80)
     {                  /* ACMD<n> is the command sequense of CMD55-CMD<n> */
         cmd &= 0x7F;   // low 7 bits only
@@ -337,13 +341,12 @@ static BYTE send_cmd()
 
 DSTATUS disk_initialize(void)
 {
-    BYTE n, ty, buf[4];
-    UINT tmr;
     INIT_PORT();
     CS_H();
-    skip_mmc(10); /* Dummy clocks */
+    tmr = 10;
+    skip_mmc(); /* Dummy clocks */
 
-    ty = 0;
+    CardType = 0;
 
     cmd = CMD0;
     arg = 0;
@@ -356,9 +359,9 @@ DSTATUS disk_initialize(void)
             for (n = 0; n < 4; n++)
             {
                 rcvr_mmc(); /* Get trailing return value of R7 resp */
-                buf[n] = data_byte;
+                buff[n] = data_byte;
             }
-            if (buf[2] == 0x01 && buf[3] == 0xAA)
+            if (buff[2] == 0x01 && buff[3] == 0xAA)
             { /* The card can work at vdd range of 2.7-3.6V */
                 arg = 1UL << 30;
                 for (tmr = 1000; tmr; tmr--)
@@ -375,9 +378,9 @@ DSTATUS disk_initialize(void)
                     for (n = 0; n < 4; n++)
                     {
                         rcvr_mmc();
-                        buf[n] = data_byte;
+                        buff[n] = data_byte;
                     }
-                    ty = (buf[0] & 0x40) ? CT_SD2 | CT_BLOCK : CT_SD2; /* SDv2 (HC or SC) */
+                    CardType = (buff[0] & 0x40) ? CT_SD2 | CT_BLOCK : CT_SD2; /* SDv2 (HC or SC) */
                 }
             }
         }
@@ -387,7 +390,7 @@ DSTATUS disk_initialize(void)
             arg = 0;
             if (send_cmd() <= 1)
             {
-                ty = CT_SD1;
+                CardType = CT_SD1;
                 for (tmr = 1000; tmr; tmr--)
                 {                 /* Wait for leaving idle state */
                     cmd = ACMD41; /* SDv1 */
@@ -398,7 +401,7 @@ DSTATUS disk_initialize(void)
             }
             else
             {
-                ty = CT_MMC;
+                CardType = CT_MMC;
                 cmd = CMD1; /* MMCv3 */
                 for (tmr = 1000; tmr; tmr--)
                 { /* Wait for leaving idle state */
@@ -410,13 +413,12 @@ DSTATUS disk_initialize(void)
             cmd = CMD16;
             arg = 512;
             if (!tmr || send_cmd() != 0) /* Set R/W block length to 512 */
-                ty = 0;
+                CardType = 0;
         }
     }
-    CardType = ty;
     release_spi();
 
-    return ty ? 0 : STA_NOINIT;
+    return CardType ? 0 : STA_NOINIT;
 }
 
 /*-----------------------------------------------------------------------*/
@@ -425,8 +427,6 @@ DSTATUS disk_initialize(void)
 
 DRESULT disk_readp(void)
 {
-    DRESULT res;
-    UINT bc, tmr;
     _buff = buff;
     if (!(CardType & CT_BLOCK))
     {
@@ -437,7 +437,7 @@ DRESULT disk_readp(void)
         arg = sector;
     }
 
-    res = RES_ERROR;
+    result = RES_ERROR;
     cmd = CMD17;
     if (send_cmd() == 0)
     { /* READ_SINGLE_BLOCK */
@@ -451,32 +451,31 @@ DRESULT disk_readp(void)
 
         if (data_byte == 0xFE)
         { /* A data packet arrived */
-            bc = 514 - offset - count;
-
             /* Skip leading bytes */
             if (offset)
-                skip_mmc(offset);
-
-            /* Receive a part of the sector */
-            if (buff)
-            { /* Store data to the memory */
-                do
-                {
-                    rcvr_mmc();
-                    *_buff++ = data_byte;
-                } while (--count);
+            {
+                tmr = offset;
+                skip_mmc();
             }
 
-            /* Skip trailing bytes and CRC */
-            skip_mmc(bc);
+            tmr = 514 - offset - count;
 
-            res = RES_OK;
+            do
+            {
+                rcvr_mmc();
+                *_buff++ = data_byte;
+            } while (--count);
+
+            /* Skip trailing bytes and CRC */
+            skip_mmc();
+
+            result = RES_OK;
         }
     }
 
     release_spi();
 
-    return res;
+    return result;
 }
 
 /*-----------------------------------------------------------------------*/
