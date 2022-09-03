@@ -894,7 +894,6 @@ FRESULT pf_mount(
 
 )
 {
-	BYTE fmt;
 	DWORD fsize, mclst;
 
 	if (disk_initialize() & STA_NOINIT)
@@ -903,28 +902,28 @@ FRESULT pf_mount(
 	}
 	/* Search FAT partition on the drive */
 	sector = 0;
-	fmt = check_fs(); /* Check sector 0 as an SFD format */
-	if (fmt == 1)
+	FatFs.fs_type = check_fs(); /* Check sector 0 as an SFD format */
+	if (FatFs.fs_type == 1)
 	{ /* Not an FAT boot record, it may be FDISK format */
 		/* Check a partition listed in top of the partition table */
 		offset = MBR_Table;
 		count = 16;
 		if (disk_readp())
 		{ /* 1st partition entry */
-			fmt = 3;
+			FatFs.fs_type = 3;
 		}
 		else
 		{
 			if (buff[4])
 			{								 /* Is the partition existing? */
 				sector = ld_dword(&buff[8]); /* Partition offset in LBA */
-				fmt = check_fs();			 /* Check the partition */
+				FatFs.fs_type = check_fs();			 /* Check the partition */
 			}
 		}
 	}
-	if (fmt == 3)
+	if (FatFs.fs_type == 3)
 		return FR_DISK_ERR;
-	if (fmt)
+	if (FatFs.fs_type)
 		return FR_NO_FILESYSTEM; /* No valid FAT patition is found */
 	/* Initialize the file system object */
 	offset = 13;
@@ -948,22 +947,21 @@ FRESULT pf_mount(
 			2;
 	FatFs.n_fatent = (CLUST)mclst;
 
-	fmt = 0; /* Determine the FAT sub type */
+	FatFs.fs_type = 0; /* Determine the FAT sub type */
 #if PF_FS_FAT12
 	if (PF_FS_FAT12 && mclst < 0xFF7)
 		fmt = FS_FAT12;
 #endif
 #if PF_FS_FAT16
 	if (PF_FS_FAT16 && mclst >= 0xFF8 && mclst < 0xFFF7)
-		fmt = FS_FAT16;
+		FatFs.fs_type = FS_FAT16;
 #endif
 #if PF_FS_FAT32
 	if (PF_FS_FAT32 && mclst >= 0xFFF7)
 		fmt = FS_FAT32;
 #endif
-	if (!fmt)
+	if (!FatFs.fs_type)
 		return FR_NO_FILESYSTEM;
-	FatFs.fs_type = fmt;
 
 #if PF_FS_FAT32
 	if (_FS_32ONLY || (PF_FS_FAT32 && fmt == FS_FAT32))
