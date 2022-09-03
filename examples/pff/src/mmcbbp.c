@@ -50,13 +50,6 @@
 #define DI_L() *(char *)IO_VIA_PORTB &= ~SD_MOSI /* Set MMC DI "low" */
 #define DO *(char *)IO_VIA_PORTB &SD_MISO        /* Test MMC DO (high:true, low:false) */
 
-void init_port()
-{
-    *(char *)IO_VIA_PORTB |= SD_MOSI | SD_SCK | SD_CS;
-    *(char *)IO_VIA_DDRB |= SD_MOSI | SD_SCK | SD_CS;
-    *(char *)IO_VIA_DDRB &= ~SD_MISO;
-}
-
 /*--------------------------------------------------------------------------
 
    Module Private Functions
@@ -100,62 +93,6 @@ BYTE *_buff;
 DWORD sector;
 UINT offset;
 UINT count;
-
-/*-----------------------------------------------------------------------*/
-/* Transmit a byte to the MMC (bitbanging)                               */
-/*-----------------------------------------------------------------------*/
-
-static void xmit_mmc()
-{
-    if (data_byte & 0x80)
-        DI_H();
-    else
-        DI_L(); /* bit7 */
-    CK_H();
-    CK_L();
-    if (data_byte & 0x40)
-        DI_H();
-    else
-        DI_L(); /* bit6 */
-    CK_H();
-    CK_L();
-    if (data_byte & 0x20)
-        DI_H();
-    else
-        DI_L(); /* bit5 */
-    CK_H();
-    CK_L();
-    if (data_byte & 0x10)
-        DI_H();
-    else
-        DI_L(); /* bit4 */
-    CK_H();
-    CK_L();
-    if (data_byte & 0x08)
-        DI_H();
-    else
-        DI_L(); /* bit3 */
-    CK_H();
-    CK_L();
-    if (data_byte & 0x04)
-        DI_H();
-    else
-        DI_L(); /* bit2 */
-    CK_H();
-    CK_L();
-    if (data_byte & 0x02)
-        DI_H();
-    else
-        DI_L(); /* bit1 */
-    CK_H();
-    CK_L();
-    if (data_byte & 0x01)
-        DI_H();
-    else
-        DI_L(); /* bit0 */
-    CK_H();
-    CK_L();
-}
 
 /*-----------------------------------------------------------------------*/
 /* Receive a byte from the MMC (bitbanging)                              */

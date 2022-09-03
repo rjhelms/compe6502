@@ -9,9 +9,12 @@ SD_SCK          = %00000100
 SD_CS           = %00001000
 
 .global _tmr
+.global _data_byte
 
 .export _dly_us
+.export _init_port
 .export _skip_mmc
+.export _xmit_mmc
 
 ; void __fastcall__ dly_us(unsigned char n);
 ; delay for (approximately) n cycles
@@ -30,6 +33,20 @@ SD_CS           = %00001000
     rts
 .endproc
 
+; void init_port()
+; initialize VIA for SD communication
+
+.proc _init_port
+    lda IO_VIA_PORTB
+    ora #(SD_MOSI | SD_SCK | SD_CS)
+    sta IO_VIA_PORTB
+    lda IO_VIA_DDRB
+    ora #(SD_MOSI | SD_SCK | SD_CS)
+    and #<~SD_MISO
+    sta IO_VIA_DDRB
+    rts
+.endproc
+
 ; void skip_mmc()
 ; skip bytes on the MMC (bitbanging)
 
@@ -43,7 +60,7 @@ SD_CS           = %00001000
     lda IO_VIA_PORTB
 
 @loop2:
-    ora #SD_SCK
+    ora #SD_SCK ; pulse clock
     sta IO_VIA_PORTB
     and #<~SD_SCK
     sta IO_VIA_PORTB
@@ -61,3 +78,30 @@ SD_CS           = %00001000
 
     rts
 .endproc
+
+; void xmit_mmc()
+; transmit a byte to the MMC (bitbanging)
+
+.proc _xmit_mmc
+    ldx #$08
+    lda IO_VIA_PORTB
+    
+@loop:
+    and #<~SD_MOSI  ; set MISO low
+    asl _data_byte  ; shift data byte left
+                    ; top bit is now in carry
+    bcc @out
+    ora #SD_MOSI    ; set MISO high if carry set
+
+@out:
+    sta IO_VIA_PORTB    ; write data bit
+    ora #SD_SCK         ; pulse clock
+    sta IO_VIA_PORTB
+    and #<~SD_SCK
+    sta IO_VIA_PORTB
+
+    dex
+    bne @loop
+    rts
+.endproc
+
