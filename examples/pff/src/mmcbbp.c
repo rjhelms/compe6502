@@ -95,68 +95,6 @@ UINT offset;
 UINT count;
 
 /*-----------------------------------------------------------------------*/
-/* Receive a byte from the MMC (bitbanging)                              */
-/*-----------------------------------------------------------------------*/
-
-static void rcvr_mmc(void)
-{
-    DI_H(); /* Send 0xFF */
-
-    data_byte = 0;
-    if (DO)
-        data_byte++; /* bit7 */
-    CK_H();
-    CK_L();
-    data_byte <<= 1;
-    if (DO)
-        data_byte++; /* bit6 */
-    CK_H();
-    CK_L();
-    data_byte <<= 1;
-    if (DO)
-        data_byte++; /* bit5 */
-    CK_H();
-    CK_L();
-    data_byte <<= 1;
-    if (DO)
-        data_byte++; /* bit4 */
-    CK_H();
-    CK_L();
-    data_byte <<= 1;
-    if (DO)
-        data_byte++; /* bit3 */
-    CK_H();
-    CK_L();
-    data_byte <<= 1;
-    if (DO)
-        data_byte++; /* bit2 */
-    CK_H();
-    CK_L();
-    data_byte <<= 1;
-    if (DO)
-        data_byte++; /* bit1 */
-    CK_H();
-    CK_L();
-    data_byte <<= 1;
-    if (DO)
-        data_byte++; /* bit0 */
-    CK_H();
-    CK_L();
-
-    return;
-}
-
-/*-----------------------------------------------------------------------*/
-/* Deselect the card and release SPI bus                                 */
-/*-----------------------------------------------------------------------*/
-
-static void release_spi(void)
-{
-    CS_H();
-    rcvr_mmc();
-}
-
-/*-----------------------------------------------------------------------*/
 /* Send a command packet to MMC                                          */
 /*-----------------------------------------------------------------------*/
 

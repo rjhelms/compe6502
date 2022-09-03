@@ -1,3 +1,5 @@
+.PC02
+
 .segment "CODE"
 
 IO_VIA_PORTB    = $8000
@@ -13,6 +15,8 @@ SD_CS           = %00001000
 
 .export _dly_us
 .export _init_port
+.export _release_spi
+.export _rcvr_mmc
 .export _skip_mmc
 .export _xmit_mmc
 
@@ -45,6 +49,45 @@ SD_CS           = %00001000
     and #<~SD_MISO
     sta IO_VIA_DDRB
     rts
+.endproc
+
+; void rcvr_mmc(void)
+; receive a byte from the MMC (bitbanging)
+
+.proc _rcvr_mmc
+    lda IO_VIA_PORTB    ; set data bit high
+    ora #SD_MOSI
+    sta IO_VIA_PORTB
+    stz _data_byte;
+    
+    ldx #$08
+@loop:
+    asl _data_byte  ; shift data left
+    lda IO_VIA_PORTB
+    and #SD_MISO
+    beq @clock
+    inc _data_byte
+
+@clock:
+    lda IO_VIA_PORTB
+    ora #SD_SCK ; pulse clock
+    sta IO_VIA_PORTB
+    and #<~SD_SCK
+    sta IO_VIA_PORTB
+    dex
+    bne @loop
+
+    rts;
+.endproc
+
+; void release_spi()
+; deselect card & release SPI bus
+
+.proc _release_spi
+    lda IO_VIA_PORTB
+    ora #SD_CS      ; release chip select
+    sta IO_VIA_PORTB
+    jmp _rcvr_mmc    ; return through rcvr_mmc
 .endproc
 
 ; void skip_mmc()
