@@ -18,11 +18,16 @@ CC_FLAGS := -Osir --add-source -Cl
 START_ADDRESS = 0x5600
 
 SOURCE_DIRS = $(sort $(dir $(wildcard $(SRC)/*/)))
-SOURCES = $(wildcard $(SRC)/*.c) $(wildcard $(SRC)/*/*.c)
-ASSEMBLY = $(patsubst $(SRC)/%.c, $(TEMP)/%.s, $(SOURCES))
+
+ASM_SOURCES = $(wildcard $(SRC)/*.s) $(wildcard $(SRC)/*/*.s)
+C_SOURCES = $(wildcard $(SRC)/*.c) $(wildcard $(SRC)/*/*.c)
+
+C_ASSEMBLY = $(patsubst $(SRC)/%.c, $(TEMP)/%.s, $(C_SOURCES))
 
 OBJECT_DIRS = $(patsubst $(SRC)/%, $(OBJ)/%, $(SOURCE_DIRS))
-OBJECTS = $(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(SOURCES))
+
+OBJECTS = $(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(C_SOURCES))
+OBJECTS += $(patsubst $(SRC)/%.s, $(OBJ)/%.o, $(ASM_SOURCES))
 
 LIB = ../../lib/compe6502.lib
 CONFIG = ../../lib/compe6502_RAM.cfg
@@ -32,7 +37,7 @@ CONFIG = ../../lib/compe6502_RAM.cfg
 
 all: $(WAVE)
 test:
-	@echo $(SOURCES)
+	@echo $(C_ASSEMBLY)
 
 $(WAVE): $(TARGET)
 	python ../../util/bin2tape.py $(TARGET) $(START_ADDRESS)
@@ -40,6 +45,9 @@ $(WAVE): $(TARGET)
 $(TARGET): $(OBJECTS) $(BIN)
 	@echo $(OBJECTS)
 	$(LD) -C $(CONFIG) -Ln $(BIN)/$(PROJECT).lbl -m $(BIN)/$(PROJECT).map -o $(TARGET) $(OBJECTS) $(LIB) -S $(START_ADDRESS)
+
+$(OBJ)/%.o: $(SRC)/%.s $(OBJ)
+	${CA} ${CA_FLAGS} -o $@ $<
 
 $(OBJ)/%.o: $(TEMP)/%.s $(OBJ)
 	${CA} ${CA_FLAGS} -o $@ $<

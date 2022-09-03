@@ -38,25 +38,9 @@
 
 #define IO_VIA_START 0x8000
 #define IO_VIA_PORTB 0x8000
-#define IO_VIA_PORTA 0x8001
 #define IO_VIA_DDRB 0x8002
-#define IO_VIA_DDRA IO_VIA_START + 0x03
-#define IO_VIA_T1CL IO_VIA_START + 0x04
-#define IO_VIA_T1CH IO_VIA_START + 0x05
-#define IO_VIA_T1LL IO_VIA_START + 0x06
-#define IO_VIA_T1LH IO_VIA_START + 0x07
-#define IO_VIA_T2CL IO_VIA_START + 0x08
-#define IO_VIA_T2CH IO_VIA_START + 0x09
-#define IO_VIA_SR IO_VIA_START + 0x0A
-#define IO_VIA_ACR IO_VIA_START + 0x0B
-#define IO_VIA_PCR IO_VIA_START + 0x0C
-#define IO_VIA_IFR IO_VIA_START + 0x0D
-#define IO_VIA_IER IO_VIA_START + 0x0E
-#define IO_VIA_PORTA_NH IO_VIA_START + 0x0F
 
 #define INIT_PORT() init_port() /* Initialize MMC control port (CS/CLK/DI:output, DO:input) */
-#define DLY_US(n) dly_us(n)     /* Delay n microseconds */
-#define FORWARD(d) (d)          /* Data in-time processing function (depends on the project) */
 
 #define CS_H() *(char *)IO_VIA_PORTB |= SD_CS    /* Set MMC CS "high" */
 #define CS_L() *(char *)IO_VIA_PORTB &= ~SD_CS   /* Set MMC CS "low" */
@@ -71,14 +55,6 @@ void init_port()
     *(char *)IO_VIA_PORTB |= SD_MOSI | SD_SCK | SD_CS;
     *(char *)IO_VIA_DDRB |= SD_MOSI | SD_SCK | SD_CS;
     *(char *)IO_VIA_DDRB &= ~SD_MISO;
-}
-
-void dly_us(unsigned int n)
-{
-    clock_t end_time = clock() + (n / 0x4000);
-    while (clock() <= end_time)
-    {
-    }
 }
 
 /*--------------------------------------------------------------------------
@@ -369,7 +345,10 @@ DSTATUS disk_initialize(void)
                     cmd = ACMD41; // this needs to stay in the loop to avoid clobbering high bit
                     if (send_cmd() == 0)
                         break;
-                    DLY_US(1000);
+                    dly_us(0);
+                    dly_us(0);
+                    dly_us(0);
+                    dly_us(232);
                 }
                 cmd = CMD58;
                 arg = 0;
@@ -396,7 +375,10 @@ DSTATUS disk_initialize(void)
                     cmd = ACMD41; /* SDv1 */
                     if (send_cmd() == 0)
                         break;
-                    DLY_US(1000);
+                    dly_us(0);
+                    dly_us(0);
+                    dly_us(0);
+                    dly_us(232);
                 }
             }
             else
@@ -407,7 +389,10 @@ DSTATUS disk_initialize(void)
                 { /* Wait for leaving idle state */
                     if (send_cmd() == 0)
                         break;
-                    DLY_US(1000);
+                    dly_us(0);
+                    dly_us(0);
+                    dly_us(0);
+                    dly_us(232);
                 }
             }
             cmd = CMD16;
@@ -445,7 +430,7 @@ DRESULT disk_readp(void)
         tmr = 1000;
         do
         { /* Wait for data packet in timeout of 100ms */
-            DLY_US(100);
+            dly_us(100);
             rcvr_mmc();
         } while (data_byte == 0xFF && --tmr);
 
@@ -527,7 +512,7 @@ DRESULT disk_writep(
             if ((rcvr_mmc() & 0x1F) == 0x05)
             {                                                       /* Receive data resp and wait for end of write process in timeout of 300ms */
                 for (tmr = 10000; rcvr_mmc() != 0xFF && tmr; tmr--) /* Wait for ready (max 1000ms) */
-                    DLY_US(100);
+                    dly_us(100);
                 if (tmr)
                     res = RES_OK;
             }
