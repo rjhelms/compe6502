@@ -4,7 +4,7 @@
 void init_port();
 
 void __fastcall__ dly_us(unsigned char n);
-void __fastcall__ forward(char d);
+void skip_mmc();
 
 static void __fastcall__ xmit_mmc();
 
