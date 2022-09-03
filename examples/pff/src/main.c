@@ -7,6 +7,8 @@
 #include <conio.h>
 #include "pff.h"
 
+#define VIDEO_DATA 0xB801
+
 void die(			/* Stop with dying message */
 		 FRESULT rc /* FatFs return value */
 )
@@ -28,8 +30,7 @@ int main(void)
 {
 	// DIR dir;	 /* Directory object */
 	// FILINFO fno; /* File information object */
-	UINT bw, br, i;
-	BYTE buff[64];
+	UINT br, i;
 	FRESULT rc;
 
 	do
@@ -44,22 +45,22 @@ int main(void)
 			}
 	} while (rc);
 
-	cputs("Open a test file (message.txt).\r\n");
-	rc = pf_open("MESSAGE.TXT");
+	cputs("Open an image file.\r\n");
+	rc = pf_open("CASTLE.IMG");
 	if (rc)
 	{
 		die(rc);
 		return (EXIT_FAILURE);
 	}
 
-	cputs("Type the file content.\r\n");
+	*(unsigned char *)VIDEO_DATA = 0xFF; // reset video buffer
 	for (;;)
 	{
-		rc = pf_read(buff, sizeof(buff), &br); /* Read a chunk of file */
+		rc = pf_read(&br); 		 /* Read a chunk of file */
 		if (rc || !br)
 			break;				 /* Error or end of file */
 		for (i = 0; i < br; i++) /* Type the data */
-			cputc(buff[i]);
+			*(unsigned char *)VIDEO_DATA = buff[i];
 	}
 	if (rc)
 	{
@@ -109,7 +110,7 @@ int main(void)
 	if (rc)
 		die(rc);
 #endif
-
-	cputs("Test completed.\r\n");
+	cgetc();
+	*(unsigned char *)VIDEO_DATA = 0xF0;
 	return (EXIT_SUCCESS);
 }

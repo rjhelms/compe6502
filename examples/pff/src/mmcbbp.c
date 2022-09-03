@@ -113,7 +113,6 @@ BYTE tmp_cmd;		  // temp location to stash command for ACMD
 DWORD arg;	   // argument for command
 DWORD tmp_arg; // temporary location to stash arg for ACMD
 
-BYTE *buff;
 BYTE *_buff;
 DWORD sector;
 UINT offset;
@@ -274,7 +273,7 @@ static void release_spi(void)
 
 static BYTE send_cmd()
 {
-	BYTE n, res;
+	BYTE n;
 	if (cmd & 0x80)
 	{				   /* ACMD<n> is the command sequense of CMD55-CMD<n> */
 		cmd &= 0x7F;   // low 7 bits only
@@ -463,14 +462,6 @@ DRESULT disk_readp(void)
 				{
 					rcvr_mmc();
 					*_buff++ = data_byte;
-				} while (--count);
-			}
-			else
-			{ /* Forward data to the outgoing stream */
-				do
-				{
-					rcvr_mmc();
-					FORWARD(data_byte);
 				} while (--count);
 			}
 

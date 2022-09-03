@@ -63,10 +63,10 @@
 #define _FS_32ONLY 0
 #endif
 
-#define ABORT(err)    \
-	{                 \
+#define ABORT(err)      \
+	{                   \
 		FatFs.flag = 0; \
-		return err;   \
+		return err;     \
 	}
 
 /*--------------------------------------------------------*/
@@ -421,7 +421,9 @@
 ---------------------------------------------------------------------------*/
 
 static FATFS FatFs; /* Pointer to the file system object (logical drive) */
-static DIR dj;
+static DIR dj;	    /* directory object */
+UINT btr;			/* counter for bytes to read */
+
 /*-----------------------------------------------------------------------*/
 /* Load multi-byte word in the FAT structure                             */
 /*-----------------------------------------------------------------------*/
@@ -476,7 +478,6 @@ static CLUST get_fat(			/* 1:IO error, Else:Cluster status */
 					 CLUST clst /* Cluster# to get the link information */
 )
 {
-	BYTE buf[4];
 #if PF_FS_FAT12
 	UINT wc, bc, ofs;
 #endif
@@ -511,13 +512,12 @@ static CLUST get_fat(			/* 1:IO error, Else:Cluster status */
 #endif
 #if PF_FS_FAT16
 	case FS_FAT16:
-		buff = buf;
 		sector = FatFs.fatbase + clst / 256;
 		offset = ((UINT)clst % 256) * 2;
 		count = 2;
 		if (disk_readp())
 			break;
-		return ld_word(buf);
+		return ld_word(buff);
 #endif
 #if PF_FS_FAT32
 	case FS_FAT32:
@@ -565,8 +565,7 @@ static CLUST get_clust(
 /* Directory handling - Rewind directory index                           */
 /*-----------------------------------------------------------------------*/
 
-static FRESULT dir_rewind(
-)
+static FRESULT dir_rewind()
 {
 	CLUST clst;
 
@@ -582,7 +581,7 @@ static FRESULT dir_rewind(
 		clst = (CLUST)fs->dirbase;
 	}
 #endif
-	dj.clust = clst;												  /* Current cluster */
+	dj.clust = clst;												   /* Current cluster */
 	dj.sect = (_FS_32ONLY || clst) ? clust2sect(clst) : FatFs.dirbase; /* Current sector */
 
 	return FR_OK; /* Seek succeeded */
@@ -592,7 +591,7 @@ static FRESULT dir_rewind(
 /* Directory handling - Move directory index next                        */
 /*-----------------------------------------------------------------------*/
 
-static FRESULT dir_next(		/* FR_OK:Succeeded, FR_NO_FILE:End of table */
+static FRESULT dir_next(/* FR_OK:Succeeded, FR_NO_FILE:End of table */
 )
 {
 	CLUST clst;
@@ -603,7 +602,7 @@ static FRESULT dir_next(		/* FR_OK:Succeeded, FR_NO_FILE:End of table */
 		return FR_NO_FILE; /* Report EOT when index has reached 65535 */
 
 	if (!(i % 16))
-	{				/* Sector changed? */
+	{			   /* Sector changed? */
 		dj.sect++; /* Next sector */
 
 		if (dj.clust == 0)
@@ -614,7 +613,7 @@ static FRESULT dir_next(		/* FR_OK:Succeeded, FR_NO_FILE:End of table */
 		else
 		{ /* Dynamic table */
 			if (((i / 16) & (FatFs.csize - 1)) == 0)
-			{							   /* Cluster changed? */
+			{							  /* Cluster changed? */
 				clst = get_fat(dj.clust); /* Get next cluster */
 				if (clst <= 1)
 					return FR_DISK_ERR;
@@ -635,9 +634,7 @@ static FRESULT dir_next(		/* FR_OK:Succeeded, FR_NO_FILE:End of table */
 /* Directory handling - Find an object in the directory                  */
 /*-----------------------------------------------------------------------*/
 
-static FRESULT dir_find(
-	BYTE *dir /* 32-byte working buffer */
-)
+static FRESULT dir_find()
 {
 	FRESULT res;
 	BYTE c;
@@ -648,7 +645,6 @@ static FRESULT dir_find(
 
 	do
 	{
-		buff = dir;
 		sector = dj.sect;
 		offset = (dj.index % 16) * 32;
 		count = 32;
@@ -657,14 +653,14 @@ static FRESULT dir_find(
 				  : FR_OK;
 		if (res != FR_OK)
 			break;
-		c = dir[DIR_Name]; /* First character */
+		c = buff[DIR_Name]; /* First character */
 		if (c == 0)
 		{
 			res = FR_NO_FILE;
 			break;
 		} /* Reached to end of table */
-		if (!(dir[DIR_Attr] & AM_VOL) && !mem_cmp(dir, dj.fn, 11))
-			break;			/* Is it a valid entry? */
+		if (!(buff[DIR_Attr] & AM_VOL) && !mem_cmp(buff, dj.fn, 11))
+			break;		  /* Is it a valid entry? */
 		res = dir_next(); /* Next entry */
 	} while (res == FR_OK);
 
@@ -720,7 +716,7 @@ static FRESULT create_name(
 	const char **path /* Pointer to pointer to the segment in the path string */
 )
 {
-	BYTE c, d, ni, si, i, *sfn;
+	BYTE c, ni, si, i, *sfn;
 	const char *p;
 #if PF_USE_LCC && defined(_EXCVT)
 	static const BYTE cvt[] = _EXCVT;
@@ -749,18 +745,7 @@ static FRESULT create_name(
 		if (c >= 0x80)
 			c = cvt[c - 0x80]; /* To upper extended char (SBCS) */
 #endif
-		if (IsDBCS1(c) && i < ni - 1)
-		{				 /* DBC 1st byte? */
-			d = p[si++]; /* Get 2nd byte */
-			sfn[i++] = c;
-			sfn[i++] = d;
-		}
-		else
-		{ /* Single byte code */
-			if (PF_USE_LCC && IsLower(c))
-				c -= 0x20; /* toupper */
-			sfn[i++] = c;
-		}
+		sfn[i++] = c;
 	}
 	*path = &p[si]; /* Rerurn pointer to the next segment */
 
@@ -819,7 +804,6 @@ static void get_fileinfo(			  /* No return code */
 /*-----------------------------------------------------------------------*/
 
 static FRESULT follow_path(					/* FR_OK(0): successful, !=0: error code */
-						   BYTE *dir,		/* 32-byte working buffer */
 						   const char *path /* Full-path string to find a file or directory */
 )
 {
@@ -828,13 +812,13 @@ static FRESULT follow_path(					/* FR_OK(0): successful, !=0: error code */
 	while (*path == ' ')
 		path++; /* Strip leading spaces */
 	if (*path == '/')
-		path++;		/* Strip heading separator if exist */
+		path++;	   /* Strip heading separator if exist */
 	dj.sclust = 0; /* Set start directory (always root dir) */
 
 	if ((BYTE)*path < ' ')
 	{ /* Null path means the root directory */
 		res = dir_rewind();
-		dir[0] = 0;
+		buff[0] = 0;
 	}
 	else
 	{ /* Follow path */
@@ -843,17 +827,17 @@ static FRESULT follow_path(					/* FR_OK(0): successful, !=0: error code */
 			res = create_name(&path); /* Get a segment */
 			if (res != FR_OK)
 				break;
-			res = dir_find(dir); /* Find it */
+			res = dir_find(); /* Find it */
 			if (res != FR_OK)
 				break; /* Could not find the object */
 			if (dj.fn[11])
 				break; /* Last segment match. Function completed. */
-			if (!(dir[DIR_Attr] & AM_DIR))
+			if (!(buff[DIR_Attr] & AM_DIR))
 			{ /* Cannot follow path because it is a file */
 				res = FR_NO_FILE;
 				break;
 			}
-			dj.sclust = get_clust(dir); /* Follow next */
+			dj.sclust = get_clust(buff); /* Follow next */
 		}
 	}
 
@@ -910,16 +894,14 @@ FRESULT pf_mount(
 
 )
 {
-	BYTE fmt, buf[36];
+	BYTE fmt;
 	DWORD fsize, mclst;
-
 
 	if (disk_initialize() & STA_NOINIT)
 	{ /* Check if the drive is ready or not */
 		return FR_NOT_READY;
 	}
 	/* Search FAT partition on the drive */
-	buff = buf;
 	sector = 0;
 	fmt = check_fs(); /* Check sector 0 as an SFD format */
 	if (fmt == 1)
@@ -933,10 +915,10 @@ FRESULT pf_mount(
 		}
 		else
 		{
-			if (buf[4])
-			{								/* Is the partition existing? */
-				sector = ld_dword(&buf[8]); /* Partition offset in LBA */
-				fmt = check_fs();			/* Check the partition */
+			if (buff[4])
+			{								 /* Is the partition existing? */
+				sector = ld_dword(&buff[8]); /* Partition offset in LBA */
+				fmt = check_fs();			 /* Check the partition */
 			}
 		}
 	}
@@ -946,22 +928,22 @@ FRESULT pf_mount(
 		return FR_NO_FILESYSTEM; /* No valid FAT patition is found */
 	/* Initialize the file system object */
 	offset = 13;
-	count = sizeof(buf);
+	count = 36;
 	if (disk_readp())
 		return FR_DISK_ERR;
-	fsize = ld_word(buf + BPB_FATSz16 - 13); /* Number of sectors per FAT */
+	fsize = ld_word(buff + BPB_FATSz16 - 13); /* Number of sectors per FAT */
 	if (!fsize)
-		fsize = ld_dword(buf + BPB_FATSz32 - 13);
+		fsize = ld_dword(buff + BPB_FATSz32 - 13);
 
-	fsize *= buf[BPB_NumFATs - 13];							   /* Number of sectors in FAT area */
-	FatFs.fatbase = sector + ld_word(buf + BPB_RsvdSecCnt - 13); /* FAT start sector (lba) */
-	FatFs.csize = buf[BPB_SecPerClus - 13];					   /* Number of sectors per cluster */
-	FatFs.n_rootdir = ld_word(buf + BPB_RootEntCnt - 13);		   /* Nmuber of root directory entries */
-	mclst = ld_word(buf + BPB_TotSec16 - 13);				   /* Number of sectors on the file system */
+	fsize *= buff[BPB_NumFATs - 13];							  /* Number of sectors in FAT area */
+	FatFs.fatbase = sector + ld_word(buff + BPB_RsvdSecCnt - 13); /* FAT start sector (lba) */
+	FatFs.csize = buff[BPB_SecPerClus - 13];					  /* Number of sectors per cluster */
+	FatFs.n_rootdir = ld_word(buff + BPB_RootEntCnt - 13);		  /* Nmuber of root directory entries */
+	mclst = ld_word(buff + BPB_TotSec16 - 13);					  /* Number of sectors on the file system */
 	if (!mclst)
-		mclst = ld_dword(buf + BPB_TotSec32 - 13);
+		mclst = ld_dword(buff + BPB_TotSec32 - 13);
 	mclst = (mclst /* Last cluster# + 1 */
-			 - ld_word(buf + BPB_RsvdSecCnt - 13) - fsize - FatFs.n_rootdir / 16) /
+			 - ld_word(buff + BPB_RsvdSecCnt - 13) - fsize - FatFs.n_rootdir / 16) /
 				FatFs.csize +
 			2;
 	FatFs.n_fatent = (CLUST)mclst;
@@ -1011,44 +993,42 @@ FRESULT pf_open(
 )
 {
 	FRESULT res;
-	BYTE sp[12], dir[32];
+	BYTE sp[12];
 
 	if (!FatFs.fs_type)
 		return FR_NOT_ENABLED; /* Check file system */
 
 	FatFs.flag = 0;
 	dj.fn = sp;
-	res = follow_path(dir, path); /* Follow the file path */
+	res = follow_path(path); /* Follow the file path */
 	if (res != FR_OK)
 		return res; /* Follow failed */
-	if (!dir[0] || (dir[DIR_Attr] & AM_DIR))
+	if (!buff[0] || (buff[DIR_Attr] & AM_DIR))
 		return FR_NO_FILE; /* It is a directory */
 
-	FatFs.org_clust = get_clust(dir);			  /* File start cluster */
-	FatFs.fsize = ld_dword(dir + DIR_FileSize); /* File size */
-	FatFs.fptr = 0;							  /* File pointer */
+	FatFs.org_clust = get_clust(buff);			 /* File start cluster */
+	FatFs.fsize = ld_dword(buff + DIR_FileSize); /* File size */
+	FatFs.fptr = 0;								 /* File pointer */
 	FatFs.flag = FA_OPENED;
 
 	return FR_OK;
 }
 
 /*-----------------------------------------------------------------------*/
-/* Read File                                                             */
+/* Read a sector from file                                               */
 /*-----------------------------------------------------------------------*/
 #if PF_USE_READ
 
 FRESULT pf_read(
-	void *buf, /* Pointer to the read buffer (NULL:Forward data to the stream)*/
-	UINT btr,  /* Number of bytes to read */
-	UINT *br   /* Pointer to number of bytes read */
+	UINT *br  /* Pointer to number of bytes read */
 )
 {
 	DRESULT dr;
 	CLUST clst;
 	DWORD sect, remain;
 	UINT rcnt;
-	BYTE cs, *rbuff = buf;
-
+	BYTE cs;
+	btr = 512;
 	*br = 0;
 	if (!FatFs.fs_type)
 		return FR_NOT_ENABLED; /* Check file system */
@@ -1062,7 +1042,7 @@ FRESULT pf_read(
 	while (btr)
 	{ /* Repeat until all data transferred */
 		if ((FatFs.fptr % 512) == 0)
-		{												   /* On the sector boundary? */
+		{													   /* On the sector boundary? */
 			cs = (BYTE)(FatFs.fptr / 512 & (FatFs.csize - 1)); /* Sector offset in the cluster */
 			if (!cs)
 			{ /* On the cluster boundary? */
@@ -1086,7 +1066,6 @@ FRESULT pf_read(
 		rcnt = 512 - (UINT)FatFs.fptr % 512; /* Get partial sector data from sector buffer */
 		if (rcnt > btr)
 			rcnt = btr;
-		buff = rbuff;
 		sector = FatFs.dsect;
 		offset = (UINT)FatFs.fptr % 512;
 		count = rcnt;
@@ -1096,8 +1075,6 @@ FRESULT pf_read(
 		FatFs.fptr += rcnt; /* Advances file read pointer */
 		btr -= rcnt;
 		*br += rcnt; /* Update read counter */
-		if (rbuff)
-			rbuff += rcnt; /* Advances the data pointer if destination is memory */
 	}
 
 	return FR_OK;
