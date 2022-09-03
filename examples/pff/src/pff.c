@@ -424,29 +424,13 @@ static FATFS FatFs; /* Pointer to the file system object (logical drive) */
 static DIR dj;		/* directory object */
 UINT btr;			/* counter for bytes to read */
 UINT br;			/* counter of bytes read */
+
 /*-----------------------------------------------------------------------*/
 /* Load multi-byte word in the FAT structure                             */
 /*-----------------------------------------------------------------------*/
 
-static WORD ld_word(const BYTE *ptr) /*	 Load a 2-byte little-endian word */
-{
-	WORD rv;
-
-	rv = ptr[1];
-	rv = rv << 8 | ptr[0];
-	return rv;
-}
-
-static DWORD ld_dword(const BYTE *ptr) /* Load a 4-byte little-endian word */
-{
-	DWORD rv;
-
-	rv = ptr[3];
-	rv = rv << 8 | ptr[2];
-	rv = rv << 8 | ptr[1];
-	rv = rv << 8 | ptr[0];
-	return rv;
-}
+#define ld_word(ptr) (*(WORD*)(ptr))	// cast a pointer to a word
+#define ld_dword(ptr) (*(DWORD*)(ptr))	// cast a pointer to a dword
 
 /*-----------------------------------------------------------------------*/
 /* String functions                                                      */
