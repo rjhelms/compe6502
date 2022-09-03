@@ -1034,34 +1034,36 @@ FRESULT pf_read()
 	if (btr > remain)
 		btr = (UINT)remain; /* Truncate btr by remaining bytes */
 
-	cs = (BYTE)(FatFs.fptr / 512 & (FatFs.csize - 1)); /* Sector offset in the cluster */
-	if (!cs)
-	{ /* On the cluster boundary? */
-		if (FatFs.fptr == 0)
-		{ /* On the top of the file? */
-			clst = FatFs.org_clust;
+	if (btr)
+	{
+		cs = (BYTE)(FatFs.fptr / 512 & (FatFs.csize - 1)); /* Sector offset in the cluster */
+		if (!cs)
+		{ /* On the cluster boundary? */
+			if (FatFs.fptr == 0)
+			{ /* On the top of the file? */
+				clst = FatFs.org_clust;
+			}
+			else
+			{
+				clst = get_fat(FatFs.curr_clust);
+			}
+			if (clst <= 1)
+				ABORT(FR_DISK_ERR);
+			FatFs.curr_clust = clst; /* Update current cluster */
 		}
-		else
-		{
-			clst = get_fat(FatFs.curr_clust);
-		}
-		if (clst <= 1)
+		sect = clust2sect(FatFs.curr_clust); /* Get current sector */
+		if (!sect)
 			ABORT(FR_DISK_ERR);
-		FatFs.curr_clust = clst; /* Update current cluster */
+		FatFs.dsect = sect + cs;
+		sector = FatFs.dsect;
+		offset = 0;
+		count = btr;
+		dr = disk_readp();
+		if (dr)
+			ABORT(FR_DISK_ERR);
+		FatFs.fptr += btr; /* Advances file read pointer */
+		br += btr;		   /* Update read counter */
 	}
-	sect = clust2sect(FatFs.curr_clust); /* Get current sector */
-	if (!sect)
-		ABORT(FR_DISK_ERR);
-	FatFs.dsect = sect + cs;
-	sector = FatFs.dsect;
-	offset = 0;
-	count = btr;
-	dr = disk_readp();
-	if (dr)
-		ABORT(FR_DISK_ERR);
-	FatFs.fptr += btr; /* Advances file read pointer */
-	br += btr;		   /* Update read counter */
-
 	return FR_OK;
 }
 #endif
