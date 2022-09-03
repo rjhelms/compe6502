@@ -557,6 +557,7 @@ void cmd_ff_reset_display()
 	cursorState = false;
 	cursorNextBlink = make_timeout_time_ms(CURSOR_BLINK_MS);
 	grViewPage = 0;
+	grDrawPage = 0;
 }
 
 // set GPIO direction - false for read, true for write
@@ -733,7 +734,7 @@ void cmd_c8_blit_bytestream()
 	u8 w = read_byte_blocking();
 	u8 h = read_byte_blocking();
 
-	if (grViewPage = 0)
+	if (grDrawPage == 0)
 	{
 		grPtr = grBuf0;
 	}
@@ -741,6 +742,7 @@ void cmd_c8_blit_bytestream()
 	{
 		grPtr = grBuf1;
 	}
+	
 	grPtr += starty * Canvas.wb;
 	grPtr += startx;
 
