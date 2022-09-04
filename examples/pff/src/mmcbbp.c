@@ -83,73 +83,10 @@ BYTE data_byte; // byte sent or received
 UINT tmr;       // counter for skip_mmc & time-outs
 BYTE n;
 
-/* BSS variables for send_cmd */
-BYTE cmd;      // command byte
-BYTE tmp_cmd;  // temp location to stash command for ACMD
-DWORD arg;     // argument for command
-DWORD tmp_arg; // temporary location to stash arg for ACMD
-
 BYTE *_buff;
 DWORD sector;
 UINT offset;
 UINT count;
-
-/*-----------------------------------------------------------------------*/
-/* Send a command packet to MMC                                          */
-/*-----------------------------------------------------------------------*/
-
-static BYTE send_cmd()
-{
-    if (cmd & 0x80)
-    {                  /* ACMD<n> is the command sequense of CMD55-CMD<n> */
-        cmd &= 0x7F;   // low 7 bits only
-        tmp_cmd = cmd; // stash command and arg
-        tmp_arg = arg;
-
-        // send cmd55
-        cmd = CMD55;
-        arg = 0;
-        send_cmd();
-
-        arg = tmp_arg; // recover cmd and arg
-        cmd = tmp_cmd;
-        if (data_byte > 1)
-            return data_byte;
-    }
-
-    /* Select the card */
-    CS_H();
-    rcvr_mmc();
-    CS_L();
-    rcvr_mmc();
-
-    /* Send a command packet */
-    data_byte = cmd;
-    xmit_mmc(); /* Start + Command index */
-    data_byte = (BYTE)(arg >> 24);
-    xmit_mmc(); /* Argument[31..24] */
-    data_byte = (BYTE)(arg >> 16);
-    xmit_mmc(); /* Argument[23..16] */
-    data_byte = (BYTE)(arg >> 8);
-    xmit_mmc(); /* Argument[15..8] */
-    data_byte = (BYTE)arg;
-    xmit_mmc();       /* Argument[7..0] */
-    data_byte = 0x01; /* Dummy CRC + Stop */
-    if (cmd == CMD0)
-        data_byte = 0x95; /* Valid CRC for CMD0(0) */
-    if (cmd == CMD8)
-        data_byte = 0x87; /* Valid CRC for CMD8(0x1AA) */
-    xmit_mmc();
-
-    /* Receive a command response */
-    n = 10; /* Wait for a valid response in timeout of 10 attempts */
-    do
-    {
-        rcvr_mmc();
-    } while ((data_byte & 0x80) && --n);
-
-    return data_byte; /* Return with the response value */
-}
 
 /*--------------------------------------------------------------------------
 
