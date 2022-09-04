@@ -19,4 +19,10 @@ extern BYTE tmp_cmd;  // temp location to stash command for ACMD
 extern DWORD arg;     // argument for command
 extern DWORD tmp_arg; // temporary location to stash arg for ACMD
 
+/* BSS variables for multiple methods */
+extern BYTE data_byte; // byte sent or received
+extern UINT tmr;       // counter for skip_mmc & time-outs
+
+extern BYTE *_buff;
+
 #endif	/* _MMCBBP_DEFINED */

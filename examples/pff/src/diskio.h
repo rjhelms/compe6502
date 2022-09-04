@@ -34,8 +34,8 @@ extern "C"
     DSTATUS disk_initialize(void);
     DRESULT disk_readp(void);
 
-#define STA_NOINIT 0x01 /* Drive not initialized */
-#define STA_NODISK 0x02 /* No medium in the drive */
+    #define STA_NOINIT 0x01 /* Drive not initialized */
+    #define STA_NODISK 0x02 /* No medium in the drive */
 
 #ifdef __cplusplus
 }

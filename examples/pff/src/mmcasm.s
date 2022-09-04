@@ -1,5 +1,34 @@
 .PC02
 
+.macro print_a
+    pha
+    pha
+    lda #$D0
+    sta $B801
+    pla
+    sta $B801
+    lda #$D6
+    sta $B801
+    pla
+.endmacro
+
+.macro print addr
+    lda #$D0
+    sta $B801
+    lda addr
+    sta $B801
+    lda #$D6
+    sta $B801
+.endmacro
+
+.macro print_zpy addr
+    lda #$D0
+    sta $B801
+    lda (addr),y
+    sta $B801
+    lda #$D6
+    sta $B801
+.endmacro
 
 ; IO definitions
 IO_VIA_PORTB    = $8000
@@ -31,6 +60,12 @@ CT_BLOCK    = $08               ; block addressing
 STA_NOINIT  = $01   ; disk not initialized
 STA_NODISK  = $02   ; disk no present
 
+; DRESULT flags
+RES_OK      = 0     ; 0: Function succeeded
+RES_ERROR   = 1     ; 1: Disk error
+RES_NOTRDY  = 2     ; 2: Not ready
+RES_PARERR  = 3     ; 3: Invalid parameter
+
 _buff       = $0400             ; SD buffer location
 
 .macpack longbranch
@@ -47,6 +82,7 @@ _buff       = $0400             ; SD buffer location
 .global _count
 
 .export _disk_initialize
+.export _disk_readp
 .export _dly_us
 .export _init_port
 .export _release_spi
@@ -55,6 +91,9 @@ _buff       = $0400             ; SD buffer location
 .export _skip_mmc
 .export _xmit_mmc
 
+.segment "ZEROPAGE"
+    __buff: .res 2
+
 .segment "BSS"
     _CardType: .res 1, $00
     _result: .res 1, $00
@@ -62,10 +101,15 @@ _buff       = $0400             ; SD buffer location
     _arg: .res 4, $00
     _tmp_cmd: .res 1, $00
     _tmp_arg: .res 4, $00
+    _data_byte: .res 1, $00
+    _tmr: .res 2, $00
+    _sector: .res 4, $00
+    _offset: .res 2, $00
+    _count: .res 2, $00
 
 .segment "CODE"
 
-; unsigned char disk_initialize;
+; unsigned char disk_initialize();
 ; initialize disk drive
 
 .proc _disk_initialize
@@ -200,8 +244,6 @@ _buff       = $0400             ; SD buffer location
 :   lda #CT_SD2         ; else, standard
     jmp @success
 
-
-
 @success:
     sta _CardType
 @SDv1:  ; not implemented for now
@@ -213,6 +255,142 @@ _buff       = $0400             ; SD buffer location
     lda #STA_NOINIT
     rts
 :   lda #00             ; else, return success
+    rts
+.endproc
+
+; unsigned char disk_readp()
+; read partial sector
+
+.proc _disk_readp
+    lda #<_buff     ; set __buff (write buffer) to bottom of _buff
+    sta __buff      ; these names are bad
+    lda #>_buff
+    sta __buff+1
+
+    lda _CardType
+    and #CT_BLOCK
+    bne @block
+
+@byte:
+    stz _arg        ; arg = sector * 512
+    lda _sector     ; move up 1 byte
+    sta _arg+1
+    lda _sector+1
+    sta _arg+2
+    lda _sector+2
+    sta _arg+3
+    asl _arg+1      ; shift left 1 bit
+    rol _arg+2
+    rol _arg+3
+    jmp @go
+
+@block:
+    lda _sector
+    sta _arg
+    lda _sector+1
+    sta _arg+1
+    lda _sector+2
+    sta _arg+2
+    lda _sector+3
+    sta _arg+3
+
+@go:
+    lda #RES_ERROR
+    sta _result
+
+    lda #CMD17      ; READ_SINGLE_BLOCK
+    sta _cmd
+    jsr _send_cmd
+    cmp #$00        ; fail if response is not $00
+    jne @return
+
+    lda #$E8        ; try 1000 times
+    sta _tmr
+    lda #$03
+    sta _tmr+1
+
+@wait_response:
+    lda #$64        ; wait 100us
+    jsr _dly_us
+    jsr _rcvr_mmc   ; fetch a byte
+    lda _data_byte
+    cmp #$FF        ; if it's not FF we've got a response
+    bne @got_response_or_timeout
+
+    lda _tmr        ; 16-bit decrement _tmr
+    sec
+    sbc #$01
+    sta _tmr
+    bcs :+
+    dec _tmr+1
+:   ora _tmr+1
+    bne @wait_response
+
+@got_response_or_timeout:
+
+    cmp #$FE        ; check if byte is $FE - data present
+    jne @return     ; fail if not
+
+    lda _offset     ; check for an offset
+    ora _offset+1
+    beq :+
+
+    lda _offset     ; skip leading bytes
+    sta _tmr
+    lda _offset+1
+    sta _tmr+1
+
+    jsr _skip_mmc
+
+:   lda #$02        ; setup tmr (for bytes to skip at end)
+    sta _tmr        ; tmr = 514 - offset - count
+    sta _tmr+1
+
+    lda _offset
+    eor #$FF
+    sec
+    adc _tmr
+    sta _tmr
+    lda _offset+1
+    eor #$FF
+    adc _tmr+1
+    sta _tmr+1
+
+    lda _count
+    eor #$FF
+    sec
+    adc _tmr
+    sta _tmr
+    lda _count+1
+    eor #$FF
+    adc _tmr+1
+    sta _tmr+1
+
+@receive_data:
+    jsr _rcvr_mmc   ; receive a byte
+    lda _data_byte  ; write to __buff
+    ldy #$00
+    sta (__buff),y
+    inc __buff      ; increment __buff
+    bne :+
+    inc __buff+1
+:   lda _count      ; 16-bit decrement of count
+    sec
+    sbc #$01
+    sta _count
+    bcs :+
+    dec _count+1
+:   ora _count+1
+    bne @receive_data   ; keep going if count >0
+
+@success:
+    jsr _skip_mmc   ; skip remaining bytes (tmr) and set RES_OK
+    lda #RES_OK
+    sta _result
+
+@return:
+    jsr _release_spi
+    lda _result
     rts
 .endproc
 
@@ -233,6 +411,7 @@ _buff       = $0400             ; SD buffer location
     rts
 .endproc
 
+; 
 ; void init_port()
 ; initialize VIA for SD communication
 

@@ -74,78 +74,11 @@
 #define CT_SDC (CT_SD1 | CT_SD2) /* SD */
 #define CT_BLOCK 0x08            /* Block addressing */
 
-
-/* BSS variables for multiple methods */
-BYTE data_byte; // byte sent or received
-UINT tmr;       // counter for skip_mmc & time-outs
-
-BYTE *_buff;
-DWORD sector;
-UINT offset;
-UINT count;
-
 /*--------------------------------------------------------------------------
 
    Public Functions
 
 ---------------------------------------------------------------------------*/
-
-/*-----------------------------------------------------------------------*/
-/* Read partial sector                                                   */
-/*-----------------------------------------------------------------------*/
-
-DRESULT disk_readp(void)
-{
-    _buff = buff;
-    if (!(CardType & CT_BLOCK))
-    {
-        arg = sector * 512; /* Convert to byte address if needed */
-    }
-    else
-    {
-        arg = sector;
-    }
-
-    result = RES_ERROR;
-    cmd = CMD17;
-    if (send_cmd() == 0)
-    { /* READ_SINGLE_BLOCK */
-
-        tmr = 1000;
-        do
-        { /* Wait for data packet in timeout of 100ms */
-            dly_us(100);
-            rcvr_mmc();
-        } while (data_byte == 0xFF && --tmr);
-
-        if (data_byte == 0xFE)
-        { /* A data packet arrived */
-            /* Skip leading bytes */
-            if (offset)
-            {
-                tmr = offset;
-                skip_mmc();
-            }
-
-            tmr = 514 - offset - count;
-
-            do
-            {
-                rcvr_mmc();
-                *_buff++ = data_byte;
-            } while (--count);
-
-            /* Skip trailing bytes and CRC */
-            skip_mmc();
-
-            result = RES_OK;
-        }
-    }
-
-    release_spi();
-
-    return result;
-}
 
 /*-----------------------------------------------------------------------*/
 /* Write partial sector                                                  */
