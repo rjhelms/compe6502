@@ -10,6 +10,9 @@ unsigned char send_cmd();
 void skip_mmc();
 void xmit_mmc();
 
+extern BYTE CardType;   // b0: MMC, b1: SDv1, b2: SDv2, b3: block address
+extern DRESULT result;  // result of disk operations
+
 /* BSS variables for send_cmd */
 extern BYTE cmd;      // command byte
 extern BYTE tmp_cmd;  // temp location to stash command for ACMD

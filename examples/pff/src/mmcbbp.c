@@ -74,14 +74,10 @@
 #define CT_SDC (CT_SD1 | CT_SD2) /* SD */
 #define CT_BLOCK 0x08            /* Block addressing */
 
-static BYTE CardType; /* b0:MMC, b1:SDv1, b2:SDv2, b3:Block addressing */
-
-DRESULT result;
 
 /* BSS variables for multiple methods */
 BYTE data_byte; // byte sent or received
 UINT tmr;       // counter for skip_mmc & time-outs
-BYTE n;
 
 BYTE *_buff;
 DWORD sector;
@@ -93,101 +89,6 @@ UINT count;
    Public Functions
 
 ---------------------------------------------------------------------------*/
-
-/*-----------------------------------------------------------------------*/
-/* Initialize Disk Drive                                                 */
-/*-----------------------------------------------------------------------*/
-
-DSTATUS disk_initialize(void)
-{
-    INIT_PORT();
-    CS_H();
-    tmr = 10;
-    skip_mmc(); /* Dummy clocks */
-
-    CardType = 0;
-
-    cmd = CMD0;
-    arg = 0;
-    if (send_cmd() == 1)
-    { /* Enter Idle state */
-        cmd = CMD8;
-        arg = 0x1AA;
-        if (send_cmd() == 1)
-        { /* SDv2 */
-            for (n = 0; n < 4; n++)
-            {
-                rcvr_mmc(); /* Get trailing return value of R7 resp */
-                buff[n] = data_byte;
-            }
-            if (buff[2] == 0x01 && buff[3] == 0xAA)
-            { /* The card can work at vdd range of 2.7-3.6V */
-                arg = 1UL << 30;
-                for (tmr = 1000; tmr; tmr--)
-                {                 /* Wait for leaving idle state (ACMD41 with HCS bit) */
-                    cmd = ACMD41; // this needs to stay in the loop to avoid clobbering high bit
-                    if (send_cmd() == 0)
-                        break;
-                    dly_us(0);
-                    dly_us(0);
-                    dly_us(0);
-                    dly_us(232);
-                }
-                cmd = CMD58;
-                arg = 0;
-                if (tmr && send_cmd() == 0)
-                { /* Check CCS bit in the OCR */
-                    for (n = 0; n < 4; n++)
-                    {
-                        rcvr_mmc();
-                        buff[n] = data_byte;
-                    }
-                    CardType = (buff[0] & 0x40) ? CT_SD2 | CT_BLOCK : CT_SD2; /* SDv2 (HC or SC) */
-                }
-            }
-        }
-        else
-        { /* SDv1 or MMCv3 */
-            cmd = ACMD41;
-            arg = 0;
-            if (send_cmd() <= 1)
-            {
-                CardType = CT_SD1;
-                for (tmr = 1000; tmr; tmr--)
-                {                 /* Wait for leaving idle state */
-                    cmd = ACMD41; /* SDv1 */
-                    if (send_cmd() == 0)
-                        break;
-                    dly_us(0);
-                    dly_us(0);
-                    dly_us(0);
-                    dly_us(232);
-                }
-            }
-            else
-            {
-                CardType = CT_MMC;
-                cmd = CMD1; /* MMCv3 */
-                for (tmr = 1000; tmr; tmr--)
-                { /* Wait for leaving idle state */
-                    if (send_cmd() == 0)
-                        break;
-                    dly_us(0);
-                    dly_us(0);
-                    dly_us(0);
-                    dly_us(232);
-                }
-            }
-            cmd = CMD16;
-            arg = 512;
-            if (!tmr || send_cmd() != 0) /* Set R/W block length to 512 */
-                CardType = 0;
-        }
-    }
-    release_spi();
-
-    return CardType ? 0 : STA_NOINIT;
-}
 
 /*-----------------------------------------------------------------------*/
 /* Read partial sector                                                   */

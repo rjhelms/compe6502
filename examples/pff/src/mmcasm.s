@@ -2,10 +2,8 @@
 
 
 ; IO definitions
-
 IO_VIA_PORTB    = $8000
 IO_VIA_DDRB     = $8002
-
 SD_MISO         = %00000001
 SD_MOSI         = %00000010
 SD_SCK          = %00000100
@@ -22,12 +20,33 @@ CMD24   = ($40 + 24)    ; WRITE_BLOCK
 CMD55   = ($40 + 55)    ; APP_CMD
 CMD58   = ($40 + 58)    ; READ_OCR
 
-.macpack	longbranch
+; card type flags
+CT_MMC      = $01               ; MMC ver 2
+CT_SD1      = $02               ; SD ver 1
+CT_SD2      = $03               ; SD ver 2
+CT_SDC      = (CT_SD1 | CT_SD2) ; SD
+CT_BLOCK    = $08               ; block addressing
+
+; DSTATUS flags
+STA_NOINIT  = $01   ; disk not initialized
+STA_NODISK  = $02   ; disk no present
+
+_buff       = $0400             ; SD buffer location
+
+.macpack longbranch
 
 .global _tmr
 .global _data_byte
 .global _cmd, _arg, _tmp_cmd, _tmp_arg
+.global _CardType, _result
+.global _tmr
 
+.global __buff
+.global _sector
+.global _offset
+.global _count
+
+.export _disk_initialize
 .export _dly_us
 .export _init_port
 .export _release_spi
@@ -37,12 +56,166 @@ CMD58   = ($40 + 58)    ; READ_OCR
 .export _xmit_mmc
 
 .segment "BSS"
+    _CardType: .res 1, $00
+    _result: .res 1, $00
     _cmd: .res 1, $00
     _arg: .res 4, $00
     _tmp_cmd: .res 1, $00
     _tmp_arg: .res 4, $00
 
 .segment "CODE"
+
+; unsigned char disk_initialize;
+; initialize disk drive
+
+.proc _disk_initialize
+    jsr _init_port      ; init port and send 10 dummy bytes
+    lda IO_VIA_PORTB
+    ora #SD_CS
+    sta IO_VIA_PORTB
+    lda #$00
+    sta _tmr+1
+    lda #$0A
+    sta _tmr
+    jsr _skip_mmc
+
+
+    lda #$00            ; clear any existing card type
+    sta _CardType
+
+    ldx #$20            ; send CMD0 up to 32 times?
+
+@check_cmd0:
+    lda #CMD0           ; send CMD0(0)
+    sta _cmd
+    stz _arg
+    stz _arg+1
+    stz _arg+2
+    stz _arg+3
+
+    phx
+    jsr _send_cmd
+    plx
+
+    cmp #$01            ; expecting 1 back
+    beq :+              ; move on if we got it
+    dex
+    jeq @return
+    jmp @check_cmd0
+
+:   lda #CMD8           ; send CMD8(1AA)
+    sta _cmd
+
+    lda #$AA            ; (arg+2 and +3 should have 00 still)
+    sta _arg
+    lda #$01
+    sta _arg+1
+
+    jsr _send_cmd
+    cmp #$01            ; 1 back means this is an SDv2 card
+    jne @SDv1           ; else proceed w/ init for SDv1
+
+@SDv2:
+    ldx #$00            ; write 4 byte response to buffer
+:   jsr _rcvr_mmc
+    lda _data_byte
+    sta _buff, x
+    inx
+    cpx #$04
+    bne :-
+
+    lda _buff+2
+    cmp #$01            ; expecting $01 in buff[2]
+    jne @return         ; so fail if otherwise
+
+    lda _buff+3
+    cmp #$AA            ; and same for $AA in buff[3]
+    jne @return
+
+    stz _arg            ; arg for ACMD41
+    stz _arg+1          ; 0x40000000 - host supports HCS
+    stz _arg+2
+    lda #$40
+    sta _arg+3
+
+    lda #$E8            ; wait for card to be ready
+    sta _tmr            ; tmr = 1000
+    lda #$03
+    sta _tmr+1
+
+:   lda _tmr            ; if timed out, move on
+    ora _tmr+1
+    beq @card_ready_v2
+
+    lda #ACMD41         ; send ACMD41(0x40000000)
+    sta _cmd
+    jsr _send_cmd
+    cmp #$00            ; ready if response is 0
+    beq @card_ready_v2
+
+    lda #$00            ; delay 1000us
+    jsr _dly_us
+    jsr _dly_us
+    jsr _dly_us
+    lda #$E8
+    jsr _dly_us
+
+    lda _tmr            ; 16 bit decrement tmr
+    sec
+    sbc #$01
+    sta _tmr
+    bcs :-
+    dec _tmr+1
+    jmp :-
+
+@card_ready_v2:
+    lda _tmr            ; is tmr 0?
+    ora _tmr+1
+    jeq @return         ; return (fail) if so
+
+    lda #CMD58
+    sta _cmd
+    stz _arg
+    stz _arg+1
+    stz _arg+2
+    stz _arg+3
+
+    jsr _send_cmd       ; send CMD58(0)
+    cmp #$00            ; expect a 0 back
+    jne @return         ; return (fail) otherwise
+
+    ldx #$00            ; write 4 byte response to buffer
+:   jsr _rcvr_mmc
+    lda _data_byte
+    sta _buff, x
+    inx
+    cpx #$04
+    bne :-
+
+    lda _buff           ; check if bit 6 is set of response
+    and #$40
+    beq :+              ; if so, is a block device
+    lda #(CT_SD2|CT_BLOCK)
+    jmp @success
+:   lda #CT_SD2         ; else, standard
+    jmp @success
+
+
+
+@success:
+    sta _CardType
+@SDv1:  ; not implemented for now
+@return:
+    jsr _release_spi;
+    
+    lda _CardType
+    bne :+              ; if CardType is 0, return failure
+    lda #STA_NOINIT
+    rts
+:   lda #00             ; else, return success
+    rts
+.endproc
+
 ; void __fastcall__ dly_us(unsigned char n);
 ; delay for (approximately) n cycles
 
@@ -117,7 +290,6 @@ CMD58   = ($40 + 58)    ; READ_OCR
 ; send a command packet to MMC
 
 .proc _send_cmd
-
     lda #$80            ; if high byte set, it's a ACMD command
     bit _cmd
     beq @enable_card
@@ -225,7 +397,6 @@ CMD58   = ($40 + 58)    ; READ_OCR
 @done:
     lda _data_byte      ; return with the data byte
     rts
-
 .endproc
 
 ; void skip_mmc()

@@ -34,17 +34,28 @@ int main(void)
     UINT i;
     FRESULT rc;
 
-    do
+    clrscr();
+    cputs("\r\nMount a volume.\r\n");
+    for (i = 0; i < 8; i++)
     {
-        clrscr();
-        cputs("\r\nMount a volume.\r\n");
         rc = pf_mount();
         if (rc)
+        {
             if (rc != 2)
             {
                 die(rc);
             }
-    } while (rc);
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    if (rc)
+    {
+        die(rc);
+    }
 
     cputs("Open an image file.\r\n");
     rc = pf_open("CASTLE.IMG");
