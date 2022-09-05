@@ -121,9 +121,9 @@ typedef unsigned long DWORD;  /* 32-bit unsigned integer */
     FRESULT pf_open(); /* Open a file */
     FRESULT pf_read();                 /* Read data from the open file */
     // FRESULT pf_write (const void* buff, UINT btw, UINT* bw);	/* Write data to the open file */
-    FRESULT pf_lseek(DWORD ofs);                   /* Move file pointer of the open file */
-    FRESULT pf_opendir(DIR *dj, const char *path); /* Open a directory */
-    FRESULT pf_readdir(DIR *dj, FILINFO *fno);     /* Read a directory item from the open directory */
+    // FRESULT pf_lseek(DWORD ofs);                   /* Move file pointer of the open file */
+    // FRESULT pf_opendir(DIR *dj, const char *path); /* Open a directory */
+    // FRESULT pf_readdir(DIR *dj, FILINFO *fno);     /* Read a directory item from the open directory */
 
 /*--------------------------------------------------------------*/
 /* Flags and offset address                                     */

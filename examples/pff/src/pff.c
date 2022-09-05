@@ -423,7 +423,10 @@ FATFS FatFs;        /* Pointer to the file system object (logical drive) */
 DIR dj;             /* directory object */
 UINT btr;           /* counter for bytes to read */
 UINT br;            /* counter of bytes read */
-DWORD mclst;
+union Clst {
+    DWORD mclst;
+    CLUST clst;
+} clst;
 union Work {
     DWORD remain;
     DWORD fsize;
@@ -526,14 +529,13 @@ static CLUST get_fat(           /* 1:IO error, Else:Cluster status */
 /*-----------------------------------------------------------------------*/
 
 static DWORD clust2sect(           /* !=0: Sector number, 0: Failed - invalid cluster# */
-                        CLUST clst /* Cluster# to be converted */
 )
 {
 
-    clst -= 2;
-    if (clst >= (FatFs.n_fatent - 2))
+    clst.clst -= 2;
+    if (clst.clst >= (FatFs.n_fatent - 2))
         return 0; /* Invalid cluster# */
-    return (DWORD)clst * FatFs.csize + FatFs.database;
+    return (DWORD)clst.clst * FatFs.csize + FatFs.database;
 }
 
 static CLUST get_clust(
@@ -570,7 +572,8 @@ static FRESULT dir_rewind()
     }
 #endif
     dj.clust = dj.sclust;                                          /* Current cluster */
-    dj.sect = (dj.sclust) ? clust2sect(dj.sclust) : FatFs.dirbase; /* Current sector */
+    clst.clst = dj.clust;
+    dj.sect = (dj.sclust) ? clust2sect() : FatFs.dirbase; /* Current sector */
 
     return FR_OK; /* Seek succeeded */
 }
@@ -604,7 +607,8 @@ static FRESULT dir_next(/* FR_OK:Succeeded, FR_NO_FILE:End of table */
                     return FR_DISK_ERR;
                 if (dj.clust >= FatFs.n_fatent)
                     return FR_NO_FILE; /* Report EOT when it reached end of dynamic table */
-                dj.sect = clust2sect(dj.clust); /* Initialize data for new cluster */
+                clst.clst = dj.clust;
+                dj.sect = clust2sect(); /* Initialize data for new cluster */
             }
         }
     }
@@ -912,14 +916,14 @@ FRESULT pf_mount(
     FatFs.fatbase = sector + ld_word(buff + BPB_RsvdSecCnt - 13); /* FAT start sector (lba) */
     FatFs.csize = buff[BPB_SecPerClus - 13];                      /* Number of sectors per cluster */
     FatFs.n_rootdir = ld_word(buff + BPB_RootEntCnt - 13);        /* Nmuber of root directory entries */
-    mclst = ld_word(buff + BPB_TotSec16 - 13);                    /* Number of sectors on the file system */
-    if (!mclst)
-        mclst = ld_dword(buff + BPB_TotSec32 - 13);
-    mclst = (mclst /* Last cluster# + 1 */
+    clst.mclst = ld_word(buff + BPB_TotSec16 - 13);                    /* Number of sectors on the file system */
+    if (!clst.mclst)
+        clst.mclst = ld_dword(buff + BPB_TotSec32 - 13);
+    clst.mclst = (clst.mclst /* Last cluster# + 1 */
              - ld_word(buff + BPB_RsvdSecCnt - 13) - work.fsize - FatFs.n_rootdir / 16) /
                 FatFs.csize +
             2;
-    FatFs.n_fatent = (CLUST)mclst;
+    FatFs.n_fatent = (CLUST)clst.mclst;
 
     FatFs.fs_type = 0; /* Determine the FAT sub type */
 #if PF_FS_FAT12
@@ -927,7 +931,7 @@ FRESULT pf_mount(
         fmt = FS_FAT12;
 #endif
 #if PF_FS_FAT16
-    if (PF_FS_FAT16 && mclst >= 0xFF8 && mclst < 0xFFF7)
+    if (PF_FS_FAT16 && clst.mclst >= 0xFF8 && clst.mclst < 0xFFF7)
         FatFs.fs_type = FS_FAT16;
 #endif
 #if PF_FS_FAT32
@@ -1016,7 +1020,8 @@ FRESULT pf_read()
                 ABORT(FR_DISK_ERR);
             // FatFs.curr_clust = clst; /* Update current cluster */
         }
-        FatFs.dsect = clust2sect(FatFs.curr_clust); /* Get current sector */
+        clst.clst = FatFs.curr_clust;
+        FatFs.dsect = clust2sect(); /* Get current sector */
         if (!FatFs.dsect)
             ABORT(FR_DISK_ERR);
         FatFs.dsect += work.cs;
