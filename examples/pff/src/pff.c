@@ -469,14 +469,13 @@ static int mem_cmp(const void *dst, const void *src, int cnt)
 /*-----------------------------------------------------------------------*/
 
 static CLUST get_fat(           /* 1:IO error, Else:Cluster status */
-                     CLUST clst /* Cluster# to get the link information */
 )
 {
 #if PF_FS_FAT12
     UINT wc, bc, ofs;
 #endif
 
-    if (clst < 2 || clst >= FatFs.n_fatent)
+    if (clst.clst < 2 || clst.clst >= FatFs.n_fatent)
         return 1; /* Range check */
 
     switch (FatFs.fs_type)
@@ -506,8 +505,8 @@ static CLUST get_fat(           /* 1:IO error, Else:Cluster status */
 #endif
 #if PF_FS_FAT16
     case FS_FAT16:
-        sector = FatFs.fatbase + clst / 256;
-        offset = ((UINT)clst % 256) * 2;
+        sector = FatFs.fatbase + clst.clst / 256;
+        offset = ((UINT)clst.clst % 256) * 2;
         count = 2;
         if (disk_readp())
             break;
@@ -602,7 +601,8 @@ static FRESULT dir_next(/* FR_OK:Succeeded, FR_NO_FILE:End of table */
         { /* Dynamic table */
             if (((work.i / 16) & (FatFs.csize - 1)) == 0)
             {                             /* Cluster changed? */
-                dj.clust = get_fat(dj.clust); /* Get next cluster */
+                clst.clst =  dj.clust;
+                dj.clust = get_fat(); /* Get next cluster */
                 if (dj.clust <= 1)
                     return FR_DISK_ERR;
                 if (dj.clust >= FatFs.n_fatent)
@@ -1014,7 +1014,8 @@ FRESULT pf_read()
             }
             else
             {
-                FatFs.curr_clust = get_fat(FatFs.curr_clust);
+                clst.clst = FatFs.curr_clust;
+                FatFs.curr_clust = get_fat();
             }
             if (FatFs.curr_clust <= 1)
                 ABORT(FR_DISK_ERR);
