@@ -442,13 +442,13 @@ union Work {
 /* String functions                                                      */
 /*-----------------------------------------------------------------------*/
 
-/* Fill memory block */
-static void mem_set(void *dst, int val, int cnt)
-{
-    char *d = (char *)dst;
-    while (cnt--)
-        *d++ = (char)val;
-}
+// /* Fill memory block */
+// static void mem_set(void *dst, int val, int cnt)
+// {
+//     char *d = (char *)dst;
+//     while (cnt--)
+//         *d++ = (char)val;
+// }
 
 /* Compare memory block */
 static int mem_cmp(const void *dst, const void *src, int cnt)
@@ -698,47 +698,47 @@ static FRESULT dir_read(
 /* Pick a segment and create the object name in directory form           */
 /*-----------------------------------------------------------------------*/
 
-static FRESULT create_name(
-    const char **path /* Pointer to pointer to the segment in the path string */
-)
-{
-    BYTE c, ni, si, i, *sfn;
-    const char *p;
-#if PF_USE_LCC && defined(_EXCVT)
-    static const BYTE cvt[] = _EXCVT;
-#endif
+// static FRESULT create_name(
+//     const char **path /* Pointer to pointer to the segment in the path string */
+// )
+// {
+//     BYTE c, ni, si, i, *sfn;
+//     const char *p;
+// #if PF_USE_LCC && defined(_EXCVT)
+//     static const BYTE cvt[] = _EXCVT;
+// #endif
 
-    /* Create file name in directory form */
-    sfn = dj.fn;
-    mem_set(sfn, ' ', 11);
-    si = i = 0;
-    ni = 8;
-    p = *path;
-    for (;;)
-    {
-        c = p[si++];
-        if (c <= ' ' || c == '/')
-            break; /* Break on end of segment */
-        if (c == '.' || i >= ni)
-        {
-            if (ni != 8 || c != '.')
-                break;
-            i = 8;
-            ni = 11;
-            continue;
-        }
-#if PF_USE_LCC && defined(_EXCVT)
-        if (c >= 0x80)
-            c = cvt[c - 0x80]; /* To upper extended char (SBCS) */
-#endif
-        sfn[i++] = c;
-    }
-    *path = &p[si]; /* Rerurn pointer to the next segment */
+//     /* Create file name in directory form */
+//     sfn = dj.fn;
+//     mem_set(sfn, ' ', 11);
+//     si = i = 0;
+//     ni = 8;
+//     p = *path;
+//     for (;;)
+//     {
+//         c = p[si++];
+//         if (c <= ' ' || c == '/')
+//             break; /* Break on end of segment */
+//         if (c == '.' || i >= ni)
+//         {
+//             if (ni != 8 || c != '.')
+//                 break;
+//             i = 8;
+//             ni = 11;
+//             continue;
+//         }
+// #if PF_USE_LCC && defined(_EXCVT)
+//         if (c >= 0x80)
+//             c = cvt[c - 0x80]; /* To upper extended char (SBCS) */
+// #endif
+//         sfn[i++] = c;
+//     }
+//     *path = &p[si]; /* Rerurn pointer to the next segment */
 
-    sfn[11] = (c <= ' ') ? 1 : 0; /* Set last segment flag if end of path */
+//     sfn[11] = (c <= ' ') ? 1 : 0; /* Set last segment flag if end of path */
 
-    return FR_OK;
-}
+//     return FR_OK;
+// }
 
 /*-----------------------------------------------------------------------*/
 /* Get file information from directory entry                             */
@@ -789,44 +789,44 @@ static void get_fileinfo(             /* No return code */
 /* Follow a file path                                                    */
 /*-----------------------------------------------------------------------*/
 
-static FRESULT follow_path(                 /* FR_OK(0): successful, !=0: error code */
-                           const char *path /* Full-path string to find a file or directory */
-)
-{
-    while (*path == ' ')
-        path++; /* Strip leading spaces */
-    if (*path == '/')
-        path++;    /* Strip heading separator if exist */
-    dj.sclust = 0; /* Set start directory (always root dir) */
+// static FRESULT follow_path(                 /* FR_OK(0): successful, !=0: error code */
+//                            const char *path /* Full-path string to find a file or directory */
+// )
+// {
+//     while (*path == ' ')
+//         path++; /* Strip leading spaces */
+//     if (*path == '/')
+//         path++;    /* Strip heading separator if exist */
+//     dj.sclust = 0; /* Set start directory (always root dir) */
 
-    if ((BYTE)*path < ' ')
-    { /* Null path means the root directory */
-        result = dir_rewind();
-        buff[0] = 0;
-    }
-    else
-    { /* Follow path */
-        for (;;)
-        {
-            result = create_name(&path); /* Get a segment */
-            if (result != FR_OK)
-                break;
-            result = dir_find(); /* Find it */
-            if (result != FR_OK)
-                break; /* Could not find the object */
-            if (dj.fn[11])
-                break; /* Last segment match. Function completed. */
-            if (!(buff[DIR_Attr] & AM_DIR))
-            { /* Cannot follow path because it is a file */
-                result = FR_NO_FILE;
-                break;
-            }
-            dj.sclust = get_clust(buff); /* Follow next */
-        }
-    }
+//     if ((BYTE)*path < ' ')
+//     { /* Null path means the root directory */
+//         result = dir_rewind();
+//         buff[0] = 0;
+//     }
+//     else
+//     { /* Follow path */
+//         for (;;)
+//         {
+//             result = create_name(&path); /* Get a segment */
+//             if (result != FR_OK)
+//                 break;
+//             result = dir_find(); /* Find it */
+//             if (result != FR_OK)
+//                 break; /* Could not find the object */
+//             if (dj.fn[11])
+//                 break; /* Last segment match. Function completed. */
+//             if (!(buff[DIR_Attr] & AM_DIR))
+//             { /* Cannot follow path because it is a file */
+//                 result = FR_NO_FILE;
+//                 break;
+//             }
+//             dj.sclust = get_clust(buff); /* Follow next */
+//         }
+//     }
 
-    return result;
-}
+//     return result;
+// }
 
 /*-----------------------------------------------------------------------*/
 /* Check a sector if it is an FAT boot record                            */
@@ -967,14 +967,13 @@ FRESULT pf_mount(
 /*-----------------------------------------------------------------------*/
 
 FRESULT pf_open(
-    const char *path /* Pointer to the file name */
 )
 {
     if (!FatFs.fs_type)
         return FR_NOT_ENABLED; /* Check file system */
 
     FatFs.flag = 0;
-    result = follow_path(path); /* Follow the file path */
+    result = dir_find(); /* Follow the file path */
     if (result != FR_OK)
         return result; /* Follow failed */
     if (!buff[0] || (buff[DIR_Attr] & AM_DIR))

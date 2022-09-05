@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <conio.h>
 #include "pff.h"
 
@@ -58,7 +59,9 @@ int main(void)
     }
 
     cputs("Open an image file.\r\n");
-    rc = pf_open("CASTLE.IMG");
+    
+    memcpy(dj.fn, "CASTLE  IMG", 12);
+    rc = pf_open();
     if (rc)
     {
         die(rc);

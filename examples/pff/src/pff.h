@@ -118,7 +118,7 @@ typedef unsigned long DWORD;  /* 32-bit unsigned integer */
     /* Petit FatFs module application interface                     */
 
     FRESULT pf_mount();                /* Mount/Unmount a logical drive */
-    FRESULT pf_open(const char *path); /* Open a file */
+    FRESULT pf_open(); /* Open a file */
     FRESULT pf_read();                 /* Read data from the open file */
     // FRESULT pf_write (const void* buff, UINT btw, UINT* bw);	/* Write data to the open file */
     FRESULT pf_lseek(DWORD ofs);                   /* Move file pointer of the open file */
