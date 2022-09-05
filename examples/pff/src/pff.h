@@ -111,8 +111,8 @@ typedef unsigned long DWORD;  /* 32-bit unsigned integer */
     #define buff ((unsigned char *)0x0400)
 
     extern UINT br;
-    static FATFS FatFs; /* Pointer to the file system object (logical drive) */
-    static DIR dj;      /* directory object */
+    extern FATFS FatFs; /* Pointer to the file system object (logical drive) */
+    extern DIR dj;      /* directory object */
 
     /*--------------------------------------------------------------*/
     /* Petit FatFs module application interface                     */

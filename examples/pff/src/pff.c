@@ -419,7 +419,8 @@
    Private Functions
 
 ---------------------------------------------------------------------------*/
-
+FATFS FatFs;        /* Pointer to the file system object (logical drive) */
+DIR dj;             /* directory object */
 UINT btr;           /* counter for bytes to read */
 UINT br;            /* counter of bytes read */
 
@@ -624,35 +625,31 @@ static FRESULT dir_next(/* FR_OK:Succeeded, FR_NO_FILE:End of table */
 
 static FRESULT dir_find()
 {
-    FRESULT res;
-    BYTE c;
-
-    res = dir_rewind(); /* Rewind directory object */
-    if (res != FR_OK)
-        return res;
+    result = dir_rewind(); /* Rewind directory object */
+    if (result != FR_OK)
+        return result;
 
     do
     {
         sector = dj.sect;
         offset = (dj.index % 16) * 32;
         count = 32;
-        res = disk_readp() /* Read an entry */
+        result = disk_readp() /* Read an entry */
                   ? FR_DISK_ERR
                   : FR_OK;
-        if (res != FR_OK)
+        if (result != FR_OK)
             break;
-        c = buff[DIR_Name]; /* First character */
-        if (c == 0)
+        if (buff[DIR_Name] == 0) /* First character */
         {
-            res = FR_NO_FILE;
+            result = FR_NO_FILE;
             break;
         } /* Reached to end of table */
         if (!(buff[DIR_Attr] & AM_VOL) && !mem_cmp(buff, dj.fn, 11))
             break;        /* Is it a valid entry? */
-        res = dir_next(); /* Next entry */
-    } while (res == FR_OK);
+        result = dir_next(); /* Next entry */
+    } while (result == FR_OK);
 
-    return res;
+    return result;
 }
 
 /*-----------------------------------------------------------------------*/
@@ -795,8 +792,6 @@ static FRESULT follow_path(                 /* FR_OK(0): successful, !=0: error 
                            const char *path /* Full-path string to find a file or directory */
 )
 {
-    FRESULT res;
-
     while (*path == ' ')
         path++; /* Strip leading spaces */
     if (*path == '/')
@@ -805,31 +800,31 @@ static FRESULT follow_path(                 /* FR_OK(0): successful, !=0: error 
 
     if ((BYTE)*path < ' ')
     { /* Null path means the root directory */
-        res = dir_rewind();
+        result = dir_rewind();
         buff[0] = 0;
     }
     else
     { /* Follow path */
         for (;;)
         {
-            res = create_name(&path); /* Get a segment */
-            if (res != FR_OK)
+            result = create_name(&path); /* Get a segment */
+            if (result != FR_OK)
                 break;
-            res = dir_find(); /* Find it */
-            if (res != FR_OK)
+            result = dir_find(); /* Find it */
+            if (result != FR_OK)
                 break; /* Could not find the object */
             if (dj.fn[11])
                 break; /* Last segment match. Function completed. */
             if (!(buff[DIR_Attr] & AM_DIR))
             { /* Cannot follow path because it is a file */
-                res = FR_NO_FILE;
+                result = FR_NO_FILE;
                 break;
             }
             dj.sclust = get_clust(buff); /* Follow next */
         }
     }
 
-    return res;
+    return result;
 }
 
 /*-----------------------------------------------------------------------*/
