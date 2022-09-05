@@ -79,7 +79,7 @@ typedef unsigned long DWORD;  /* 32-bit unsigned integer */
     typedef struct
     {
         WORD index;   /* Current read/write index number */
-        BYTE *fn;     /* Pointer to the SFN (in/out) {file[8],ext[3],status[1]} */
+        BYTE fn[12];  /* SFN (in/out) {file[8],ext[3],status[1]} */
         CLUST sclust; /* Table start cluster (0:Static table) */
         CLUST clust;  /* Current cluster */
         DWORD sect;   /* Current sector */
@@ -111,7 +111,9 @@ typedef unsigned long DWORD;  /* 32-bit unsigned integer */
     #define buff ((unsigned char *)0x0400)
 
     extern UINT br;
-    
+    static FATFS FatFs; /* Pointer to the file system object (logical drive) */
+    static DIR dj;      /* directory object */
+
     /*--------------------------------------------------------------*/
     /* Petit FatFs module application interface                     */
 

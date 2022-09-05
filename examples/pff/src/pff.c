@@ -420,8 +420,6 @@
 
 ---------------------------------------------------------------------------*/
 
-static FATFS FatFs; /* Pointer to the file system object (logical drive) */
-static DIR dj;      /* directory object */
 UINT btr;           /* counter for bytes to read */
 UINT br;            /* counter of bytes read */
 
@@ -978,17 +976,13 @@ FRESULT pf_open(
     const char *path /* Pointer to the file name */
 )
 {
-    FRESULT res;
-    BYTE sp[12];
-
     if (!FatFs.fs_type)
         return FR_NOT_ENABLED; /* Check file system */
 
     FatFs.flag = 0;
-    dj.fn = sp;
-    res = follow_path(path); /* Follow the file path */
-    if (res != FR_OK)
-        return res; /* Follow failed */
+    result = follow_path(path); /* Follow the file path */
+    if (result != FR_OK)
+        return result; /* Follow failed */
     if (!buff[0] || (buff[DIR_Attr] & AM_DIR))
         return FR_NO_FILE; /* It is a directory */
 
