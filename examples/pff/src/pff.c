@@ -423,9 +423,10 @@ FATFS FatFs;        /* Pointer to the file system object (logical drive) */
 DIR dj;             /* directory object */
 UINT btr;           /* counter for bytes to read */
 UINT br;            /* counter of bytes read */
-
+DWORD mclst;
 union Work {
     DWORD remain;
+    DWORD fsize;
     BYTE cs;
 } work;
 
@@ -875,8 +876,6 @@ FRESULT pf_mount(
 
 )
 {
-    DWORD fsize, mclst;
-
     if (disk_initialize() & STA_NOINIT)
     { /* Check if the drive is ready or not */
         return FR_NOT_READY;
@@ -911,11 +910,11 @@ FRESULT pf_mount(
     count = 36;
     if (disk_readp())
         return FR_DISK_ERR;
-    fsize = ld_word(buff + BPB_FATSz16 - 13); /* Number of sectors per FAT */
-    if (!fsize)
-        fsize = ld_dword(buff + BPB_FATSz32 - 13);
+    work.fsize = ld_word(buff + BPB_FATSz16 - 13); /* Number of sectors per FAT */
+    if (!work.fsize)
+        work.fsize = ld_dword(buff + BPB_FATSz32 - 13);
 
-    fsize *= buff[BPB_NumFATs - 13];                              /* Number of sectors in FAT area */
+    work.fsize *= buff[BPB_NumFATs - 13];                          /* Number of sectors in FAT area */
     FatFs.fatbase = sector + ld_word(buff + BPB_RsvdSecCnt - 13); /* FAT start sector (lba) */
     FatFs.csize = buff[BPB_SecPerClus - 13];                      /* Number of sectors per cluster */
     FatFs.n_rootdir = ld_word(buff + BPB_RootEntCnt - 13);        /* Nmuber of root directory entries */
@@ -923,7 +922,7 @@ FRESULT pf_mount(
     if (!mclst)
         mclst = ld_dword(buff + BPB_TotSec32 - 13);
     mclst = (mclst /* Last cluster# + 1 */
-             - ld_word(buff + BPB_RsvdSecCnt - 13) - fsize - FatFs.n_rootdir / 16) /
+             - ld_word(buff + BPB_RsvdSecCnt - 13) - work.fsize - FatFs.n_rootdir / 16) /
                 FatFs.csize +
             2;
     FatFs.n_fatent = (CLUST)mclst;
@@ -952,11 +951,11 @@ FRESULT pf_mount(
     else
     {
 #endif
-        FatFs.dirbase = FatFs.fatbase + fsize; /* Root directory start sector (lba) */
+        FatFs.dirbase = FatFs.fatbase + work.fsize; /* Root directory start sector (lba) */
 #if PF_FS_FAT32
     }
 #endif
-    FatFs.database = FatFs.fatbase + fsize + FatFs.n_rootdir / 16; /* Data start sector (lba) */
+    FatFs.database = FatFs.fatbase + work.fsize + FatFs.n_rootdir / 16; /* Data start sector (lba) */
 
     FatFs.flag = 0;
 
