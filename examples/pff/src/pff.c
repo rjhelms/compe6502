@@ -427,6 +427,7 @@ DWORD mclst;
 union Work {
     DWORD remain;
     DWORD fsize;
+    WORD i;
     BYTE cs;
 } work;
 
@@ -584,38 +585,34 @@ static FRESULT dir_rewind()
 static FRESULT dir_next(/* FR_OK:Succeeded, FR_NO_FILE:End of table */
 )
 {
-    CLUST clst;
-    WORD i;
-
-    i = dj.index + 1;
-    if (!i || !dj.sect)
+    work.i = dj.index + 1;
+    if (!work.i || !dj.sect)
         return FR_NO_FILE; /* Report EOT when index has reached 65535 */
 
-    if (!(i % 16))
+    if (!(work.i % 16))
     {              /* Sector changed? */
         dj.sect++; /* Next sector */
 
         if (dj.clust == 0)
         { /* Static table */
-            if (i >= FatFs.n_rootdir)
+            if (work.i >= FatFs.n_rootdir)
                 return FR_NO_FILE; /* Report EOT when end of table */
         }
         else
         { /* Dynamic table */
-            if (((i / 16) & (FatFs.csize - 1)) == 0)
+            if (((work.i / 16) & (FatFs.csize - 1)) == 0)
             {                             /* Cluster changed? */
-                clst = get_fat(dj.clust); /* Get next cluster */
-                if (clst <= 1)
+                dj.clust = get_fat(dj.clust); /* Get next cluster */
+                if (dj.clust <= 1)
                     return FR_DISK_ERR;
-                if (clst >= FatFs.n_fatent)
+                if (dj.clust >= FatFs.n_fatent)
                     return FR_NO_FILE; /* Report EOT when it reached end of dynamic table */
-                dj.clust = clst;       /* Initialize data for new cluster */
-                dj.sect = clust2sect(clst);
+                dj.sect = clust2sect(dj.clust); /* Initialize data for new cluster */
             }
         }
     }
 
-    dj.index = i;
+    dj.index = work.i;
 
     return FR_OK;
 }
