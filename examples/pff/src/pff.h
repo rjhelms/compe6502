@@ -98,19 +98,20 @@ typedef unsigned long DWORD;  /* 32-bit unsigned integer */
 
     /* File function return code (FRESULT) */
 
-    typedef enum
-    {
-        FR_OK = 0,       /* 0 */
-        FR_DISK_ERR,     /* 1 */
-        FR_NOT_READY,    /* 2 */
-        FR_NO_FILE,      /* 3 */
-        FR_NOT_OPENED,   /* 4 */
-        FR_NOT_ENABLED,  /* 5 */
-        FR_NO_FILESYSTEM /* 6 */
-    } FRESULT;
+    #define FR_OK 0
+    #define FR_DISK_ERR 1
+    #define FR_NOT_READY 2
+    #define FR_NO_FILE 3
+    #define FR_NOT_OPENED 4
+    #define FR_NOT_ENABLED 5
+    #define FR_NO_FILESYSTEM 6
 
-#define buff ((unsigned char *)0x0400)
+    typedef BYTE FRESULT;
+
+    #define buff ((unsigned char *)0x0400)
+
     extern UINT br;
+    
     /*--------------------------------------------------------------*/
     /* Petit FatFs module application interface                     */
 

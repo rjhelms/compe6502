@@ -80,6 +80,7 @@ _buff       = $0400             ; SD buffer location
 .global _sector
 .global _offset
 .global _count
+.global _result
 
 .export _disk_initialize
 .export _disk_readp
