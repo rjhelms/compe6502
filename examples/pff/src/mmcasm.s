@@ -70,11 +70,11 @@ _buff       = $0400             ; SD buffer location
 
 .macpack longbranch
 
-.global _tmr
-.global _data_byte
-.global _cmd, _arg, _tmp_cmd, _tmp_arg
-.global _CardType, _result
-.global _tmr
+; .global _tmr
+; .global _data_byte
+; .global _cmd, _arg, _tmp_cmd, _tmp_arg
+; .global _CardType, _result
+; .global _tmr
 
 .global __buff
 .global _sector
@@ -83,29 +83,29 @@ _buff       = $0400             ; SD buffer location
 
 .export _disk_initialize
 .export _disk_readp
-.export _dly_us
-.export _init_port
-.export _release_spi
-.export _rcvr_mmc
-.export _send_cmd
-.export _skip_mmc
-.export _xmit_mmc
+; .export _dly_us
+; .export _init_port
+; .export _release_spi
+; .export _rcvr_mmc
+; .export _send_cmd
+; .export _skip_mmc
+; .export _xmit_mmc
 
 .segment "ZEROPAGE"
     __buff: .res 2
 
 .segment "BSS"
-    _CardType: .res 1, $00
+    _sector: .res 4, $00
+    _offset: .res 2, $00
+    _count: .res 2, $00
     _result: .res 1, $00
+    _CardType: .res 1, $00
     _cmd: .res 1, $00
     _arg: .res 4, $00
     _tmp_cmd: .res 1, $00
     _tmp_arg: .res 4, $00
     _data_byte: .res 1, $00
     _tmr: .res 2, $00
-    _sector: .res 4, $00
-    _offset: .res 2, $00
-    _count: .res 2, $00
 
 .segment "CODE"
 
