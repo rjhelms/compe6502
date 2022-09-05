@@ -558,11 +558,8 @@ static CLUST get_clust(
 
 static FRESULT dir_rewind()
 {
-    CLUST clst;
-
     dj.index = 0;
-    clst = dj.sclust;
-    if (clst == 1 || clst >= FatFs.n_fatent)
+    if (dj.sclust == 1 || dj.sclust >= FatFs.n_fatent)
     { /* Check start cluster range */
         return FR_DISK_ERR;
     }
@@ -572,8 +569,8 @@ static FRESULT dir_rewind()
         clst = (CLUST)fs->dirbase;
     }
 #endif
-    dj.clust = clst;                                                   /* Current cluster */
-    dj.sect = (_FS_32ONLY || clst) ? clust2sect(clst) : FatFs.dirbase; /* Current sector */
+    dj.clust = dj.sclust;                                          /* Current cluster */
+    dj.sect = (dj.sclust) ? clust2sect(dj.sclust) : FatFs.dirbase; /* Current sector */
 
     return FR_OK; /* Seek succeeded */
 }
