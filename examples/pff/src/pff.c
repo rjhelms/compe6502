@@ -419,10 +419,6 @@
    Private Functions
 
 ---------------------------------------------------------------------------*/
-FATFS FatFs;        /* Pointer to the file system object (logical drive) */
-DIR dj;             /* directory object */
-UINT btr;           /* counter for bytes to read */
-UINT br;            /* counter of bytes read */
 
 union Clst {
     DWORD mclst;
@@ -842,40 +838,6 @@ static void get_fileinfo(             /* No return code */
 
 //     return result;
 // }
-
-/*-----------------------------------------------------------------------*/
-/* Check a sector if it is an FAT boot record                            */
-/*-----------------------------------------------------------------------*/
-
-static BYTE check_fs(/* 0:The FAT boot record, 1:Valid boot record but not an FAT, 2:Not a boot record, 3:Error */
-)
-{
-
-    offset = 510;
-    count = 2;
-    if (disk_readp())
-    { /* Read the boot record */
-        return 3;
-    }
-    if (ld_word(buff) != 0xAA55)
-    { /* Check record signature */
-        return 2;
-    }
-
-    offset = BS_FilSysType;
-    count = 2;
-    if (!_FS_32ONLY && !disk_readp() && ld_word(buff) == 0x4146)
-    { /* Check FAT12/16 */
-        return 0;
-    }
-#if PF_FS_FAT32
-    if (PF_FS_FAT32 && !disk_readp(buf, sect, BS_FilSysType32, 2) && ld_word(buf) == 0x4146)
-    { /* Check FAT32 */
-        return 0;
-    }
-#endif
-    return 1;
-}
 
 /*--------------------------------------------------------------------------
 
