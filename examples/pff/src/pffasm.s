@@ -99,16 +99,24 @@ BS_FilSysType = 54
 .global _br
 .global _clst
 
+.globalzp _dst
+.globalzp _src
 
 .global _offset
 .global _count
 .global _sector
 
 .import _disk_readp
+.import _work
 
 .export _check_fs
 .export _clust2sect
 .export _get_fat
+.export _mem_cmp
+
+.segment "ZEROPAGE"
+    _dst: .res 2
+    _src: .res 2
 
 .segment "BSS"
     _FatFs: .tag FATFS
@@ -320,5 +328,26 @@ BS_FilSysType = 54
 @return_error:
     lda #$01
     ldx #$00
+    rts
+.endproc
+
+; unsigned char mem_cmp
+; compare memory blocks
+
+.proc _mem_cmp
+    ldy _work
+@loop:
+    dey
+    lda (_dst),y
+    cmp (_src),y
+    beq :+
+
+    lda #$01
+    rts
+
+:   cpy #$00
+    bne @loop
+
+    tya
     rts
 .endproc

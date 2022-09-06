@@ -101,6 +101,7 @@ typedef unsigned long DWORD;  /* 32-bit unsigned integer */
         CLUST clst;
         DWORD sect;
     };
+
     /* File function return code (FRESULT) */
 
     #define FR_OK 0
@@ -122,11 +123,17 @@ typedef unsigned long DWORD;  /* 32-bit unsigned integer */
     extern UINT btr;           /* counter for bytes to read */
     extern UINT br;            /* counter of bytes read */
 
+    extern const unsigned char* dst;
+    extern const unsigned char* src;
+    #pragma zpsym ("dst")
+    #pragma zpsym ("src")
+
     /* internal functions ported to assembly */
 
     BYTE check_fs();
     void clust2sect();
     unsigned int get_fat();
+    unsigned char mem_cmp();
 
     /*--------------------------------------------------------------*/
     /* Petit FatFs module application interface                     */

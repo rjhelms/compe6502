@@ -427,45 +427,12 @@ union Work {
     BYTE cs;
 } work;
 
-#pragma bss-name(push,"ZEROPAGE")
-const unsigned char* dst;
-const unsigned char* src;
-#pragma bss-name (pop)
-#pragma zpsym ("dst")
-#pragma zpsym ("src")
-
 /*-----------------------------------------------------------------------*/
 /* Load multi-byte word in the FAT structure                             */
 /*-----------------------------------------------------------------------*/
 
 #define ld_word(ptr) (*(WORD *)(ptr))   // cast a pointer to a word
 #define ld_dword(ptr) (*(DWORD *)(ptr)) // cast a pointer to a dword
-
-/*-----------------------------------------------------------------------*/
-/* String functions                                                      */
-/*-----------------------------------------------------------------------*/
-
-// /* Fill memory block */
-// static void mem_set(void *dst, int val, int cnt)
-// {
-//     char *d = (char *)dst;
-//     while (cnt--)
-//         *d++ = (char)val;
-// }
-
-/* Compare memory block */
-static int mem_cmp()
-{
-    br = 0;
-    while (work.cs)
-    {
-        --work.cs;
-        br = *dst++ - *src++;
-        if (br != 0)
-        break;
-    }
-    return br;
-}
 
 /*-----------------------------------------------------------------------*/
 /* Directory handling - Rewind directory index                           */
