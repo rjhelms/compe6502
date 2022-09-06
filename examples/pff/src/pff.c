@@ -435,36 +435,6 @@ union Work {
 #define ld_dword(ptr) (*(DWORD *)(ptr)) // cast a pointer to a dword
 
 /*-----------------------------------------------------------------------*/
-/* Directory handling - Rewind directory index                           */
-/*-----------------------------------------------------------------------*/
-
-static FRESULT dir_rewind()
-{
-    dj.index = 0;
-    if (dj.sclust == 1 || dj.sclust >= FatFs.n_fatent)
-    { /* Check start cluster range */
-        return FR_DISK_ERR;
-    }
-#if PF_FS_FAT32
-    if (PF_FS_FAT32 && !clst && (_FS_32ONLY || fs->fs_type == FS_FAT32))
-    { /* Replace cluster# 0 with root cluster# if in FAT32 */
-        clst = (CLUST)fs->dirbase;
-    }
-#endif
-    dj.clust = dj.sclust;       /* Current cluster */
-    clst.clst = dj.clust;
-    if (dj.sclust)          /* Current sector */
-    {
-        clust2sect();
-        dj.sect = clst.sect;
-    } else {
-        dj.sect = FatFs.dirbase;
-    }
-
-    return FR_OK; /* Seek succeeded */
-}
-
-/*-----------------------------------------------------------------------*/
 /* Directory handling - Move directory index next                        */
 /*-----------------------------------------------------------------------*/
 

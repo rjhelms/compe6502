@@ -134,6 +134,7 @@ typedef unsigned long DWORD;  /* 32-bit unsigned integer */
     void clust2sect();
     unsigned int get_fat();
     unsigned char mem_cmp();
+    FRESULT dir_rewind();
 
     /*--------------------------------------------------------------*/
     /* Petit FatFs module application interface                     */

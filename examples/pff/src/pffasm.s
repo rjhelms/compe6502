@@ -70,6 +70,16 @@
 
 _buff = $0400
 
+; file return results
+
+FR_OK               = $00
+FR_DISK_ERR         = $01
+FR_NOT_READY        = $02
+FR_NO_FILE          = $03
+FR_NOT_OPENED       = $04
+FR_NOT_ENABLED      = $05
+FR_NO_FILESYSTEM    = $06
+
 ; file status flag
 FA_OPENED   = $01
 FA_WPRT     = $02
@@ -111,6 +121,7 @@ BS_FilSysType = 54
 
 .export _check_fs
 .export _clust2sect
+.export _dir_rewind
 .export _get_fat
 .export _mem_cmp
 
@@ -258,6 +269,66 @@ BS_FilSysType = 54
     adc _FatFs+FATFS::database+3
     sta _clst+3
 
+    rts
+.endproc
+
+; unsigned char dir_rewind()
+; rewind directory index
+
+.proc _dir_rewind
+    stz _dj+DIR::index
+    stz _dj+DIR::index+1
+
+    lda _dj+DIR::sclust+1
+    bne :+
+    lda _dj+DIR::sclust
+    cmp #$01
+    beq @disk_err
+    lda _dj+DIR::sclust
+    cmp _FatFs+FATFS::n_fatent
+    lda _dj+DIR::sclust+1
+    sbc _FatFs+FATFS::n_fatent
+    bcc @disk_ok
+
+@disk_err:
+    lda #FR_DISK_ERR
+    rts
+
+@disk_ok:
+    lda _dj+DIR::sclust
+    sta _dj+DIR::clust
+    sta _clst
+    lda _dj+DIR::sclust+1
+    sta _dj+DIR::clust+1
+    sta _clst+1
+
+    lda _dj+DIR::sclust
+    ora _dj+DIR::sclust+1
+    beq @sclust_zero
+
+    jsr _clust2sect
+    lda _clst
+    sta _dj+DIR::sect
+    lda _clst+1
+    sta _dj+DIR::sect+1
+    lda _clst+2
+    sta _dj+DIR::sect+2
+    lda _clst+3
+    sta _dj+DIR::sect+3
+    jmp @return
+
+@sclust_zero:
+    lda _FatFs+FATFS::dirbase
+    sta _dj+DIR::sect
+    lda _FatFs+FATFS::dirbase+1
+    sta _dj+DIR::sect+1
+    lda _FatFs+FATFS::dirbase+2
+    sta _dj+DIR::sect+2
+    lda _FatFs+FATFS::dirbase+3
+    sta _dj+DIR::sect+3
+
+@return:
+    lda #FR_OK
     rts
 .endproc
 
