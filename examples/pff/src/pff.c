@@ -423,10 +423,13 @@ FATFS FatFs;        /* Pointer to the file system object (logical drive) */
 DIR dj;             /* directory object */
 UINT btr;           /* counter for bytes to read */
 UINT br;            /* counter of bytes read */
+
 union Clst {
     DWORD mclst;
     CLUST clst;
+    DWORD sect;
 } clst;
+
 union Work {
     DWORD remain;
     DWORD fsize;
@@ -434,7 +437,8 @@ union Work {
     BYTE cs;
 } work;
 
-
+const unsigned char* dst;
+const unsigned char* src;
 /*-----------------------------------------------------------------------*/
 /* Load multi-byte word in the FAT structure                             */
 /*-----------------------------------------------------------------------*/
@@ -455,13 +459,12 @@ union Work {
 // }
 
 /* Compare memory block */
-static int mem_cmp(const void *dst, const void *src, int cnt)
+static int mem_cmp()
 {
-    const char *d = (const char *)dst, *s = (const char *)src;
-    int r = 0;
-    while (cnt-- && (r = *d++ - *s++) == 0)
+    br = 0;
+    while (work.i-- && (br = *dst++ - *src++) == 0)
         ;
-    return r;
+    return br;
 }
 
 /*-----------------------------------------------------------------------*/
@@ -527,14 +530,18 @@ static CLUST get_fat(           /* 1:IO error, Else:Cluster status */
 /* Get sector# from cluster# / Get cluster field from directory entry    */
 /*-----------------------------------------------------------------------*/
 
-static DWORD clust2sect(           /* !=0: Sector number, 0: Failed - invalid cluster# */
+void clust2sect(           /* !=0: Sector number, 0: Failed - invalid cluster# */
 )
 {
 
     clst.clst -= 2;
     if (clst.clst >= (FatFs.n_fatent - 2))
-        return 0; /* Invalid cluster# */
-    return (DWORD)clst.clst * FatFs.csize + FatFs.database;
+    {
+        clst.sect = 0; /* Invalid cluster# */
+        return;
+    }
+    clst.sect = clst.clst * FatFs.csize + FatFs.database;
+    return;
 }
 
 static CLUST get_clust(
@@ -570,9 +577,15 @@ static FRESULT dir_rewind()
         clst = (CLUST)fs->dirbase;
     }
 #endif
-    dj.clust = dj.sclust;                                          /* Current cluster */
+    dj.clust = dj.sclust;       /* Current cluster */
     clst.clst = dj.clust;
-    dj.sect = (dj.sclust) ? clust2sect() : FatFs.dirbase; /* Current sector */
+    if (dj.sclust)          /* Current sector */
+    {
+        clust2sect();
+        dj.sect = clst.sect;
+    } else {
+        dj.sect = FatFs.dirbase;
+    }
 
     return FR_OK; /* Seek succeeded */
 }
@@ -608,7 +621,8 @@ static FRESULT dir_next(/* FR_OK:Succeeded, FR_NO_FILE:End of table */
                 if (dj.clust >= FatFs.n_fatent)
                     return FR_NO_FILE; /* Report EOT when it reached end of dynamic table */
                 clst.clst = dj.clust;
-                dj.sect = clust2sect(); /* Initialize data for new cluster */
+                clust2sect();
+                dj.sect = clst.sect; /* Initialize data for new cluster */
             }
         }
     }
@@ -643,7 +657,10 @@ static FRESULT dir_find()
             result = FR_NO_FILE;
             break;
         } /* Reached to end of table */
-        if (!(buff[DIR_Attr] & AM_VOL) && !mem_cmp(buff, dj.fn, 11))
+        dst = buff;
+        src = dj.fn;
+        work.i = 11;
+        if (!(buff[DIR_Attr] & AM_VOL) && !mem_cmp())
             break;        /* Is it a valid entry? */
         result = dir_next(); /* Next entry */
     } while (result == FR_OK);
@@ -1022,7 +1039,8 @@ FRESULT pf_read()
             // FatFs.curr_clust = clst; /* Update current cluster */
         }
         clst.clst = FatFs.curr_clust;
-        FatFs.dsect = clust2sect(); /* Get current sector */
+        clust2sect();
+        FatFs.dsect = clst.sect; /* Get current sector */
         if (!FatFs.dsect)
             ABORT(FR_DISK_ERR);
         FatFs.dsect += work.cs;
