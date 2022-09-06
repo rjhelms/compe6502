@@ -435,48 +435,6 @@ union Work {
 #define ld_dword(ptr) (*(DWORD *)(ptr)) // cast a pointer to a dword
 
 /*-----------------------------------------------------------------------*/
-/* Directory handling - Move directory index next                        */
-/*-----------------------------------------------------------------------*/
-
-static FRESULT dir_next(/* FR_OK:Succeeded, FR_NO_FILE:End of table */
-)
-{
-    work.i = dj.index + 1;
-    if (!work.i || !dj.sect)
-        return FR_NO_FILE; /* Report EOT when index has reached 65535 */
-
-    if (!(work.i % 16))
-    {              /* Sector changed? */
-        dj.sect++; /* Next sector */
-
-        if (dj.clust == 0)
-        { /* Static table */
-            if (work.i >= FatFs.n_rootdir)
-                return FR_NO_FILE; /* Report EOT when end of table */
-        }
-        else
-        { /* Dynamic table */
-            if (((work.i / 16) & (FatFs.csize - 1)) == 0)
-            {                             /* Cluster changed? */
-                clst.clst =  dj.clust;
-                dj.clust = get_fat(); /* Get next cluster */
-                if (dj.clust <= 1)
-                    return FR_DISK_ERR;
-                if (dj.clust >= FatFs.n_fatent)
-                    return FR_NO_FILE; /* Report EOT when it reached end of dynamic table */
-                clst.clst = dj.clust;
-                clust2sect();
-                dj.sect = clst.sect; /* Initialize data for new cluster */
-            }
-        }
-    }
-
-    dj.index = work.i;
-
-    return FR_OK;
-}
-
-/*-----------------------------------------------------------------------*/
 /* Directory handling - Find an object in the directory                  */
 /*-----------------------------------------------------------------------*/
 

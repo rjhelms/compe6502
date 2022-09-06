@@ -122,6 +122,7 @@ BS_FilSysType = 54
 .export _check_fs
 .export _clust2sect
 .export _dir_rewind
+.export _dir_next
 .export _get_fat
 .export _mem_cmp
 
@@ -269,6 +270,130 @@ BS_FilSysType = 54
     adc _FatFs+FATFS::database+3
     sta _clst+3
 
+    rts
+.endproc
+
+; unsinged char dir_next
+; move directory index next
+;
+; FR_OK - succeeded, FR_NO_FILE - end of table
+
+.proc _dir_next
+    lda _dj+DIR::index      ; load and increment index
+    ldx _dj+DIR::index+1
+    clc
+    adc #$01
+    bcc :+
+    inx
+:   sta _work
+    stx _work+1
+
+    lda _work               ; if index or sect are 0
+    ora _work+1             ; return error
+    beq @end_of_table
+    lda _dj+DIR::sect
+    ora _dj+DIR::sect+1
+    ora _dj+DIR::sect+2
+    ora _dj+DIR::sect+3
+    bne @in_table
+
+@end_of_table:
+    lda #FR_NO_FILE
+    rts
+
+@in_table:
+    lda _work               ; check if sector aligned
+    and #$0F
+    jne @set_and_return     ; if not, we're done
+
+    inc _dj+DIR::sect       ; increment sector
+    bne :+
+    inc _dj+DIR::sect+1
+    bne :+
+    inc _dj+DIR::sect+2
+    bne :+
+    inc _dj+DIR::sect+3
+
+:   lda _dj+DIR::clust
+    ora _dj+DIR::clust
+    bne @dynamic_table
+
+@static_table:
+    lda _work               ; if work.i < FatFs.n_rootdir
+    cmp _FatFs+FATFS::n_rootdir
+    lda _work+1
+    sbc _FatFs+FATFS::n_rootdir+1
+    jcc @set_and_return     ; return 
+
+    lda #FR_NO_FILE
+    rts                     ; else report failure
+
+@dynamic_table:
+    lda _work               ; check if cluster changed
+    sta _work+2             ; copy work.i to high word of work
+    lda _work+1
+    sta _work+3
+
+    lsr _work+3             ; shift copy right 4 bits (div/16)
+    ror _work+2
+    lsr _work+3
+    ror _work+2
+    lsr _work+3
+    ror _work+2
+    lsr _work+3
+    ror _work+2
+    
+    lda _FatFs+FATFS::csize ; csize -1 & work/16
+    dec
+    and _work+2
+    bne @set_and_return     ; if cluster hasn't changed, finish up
+
+    lda _dj+DIR::clust      ; get next cluster
+    sta _clst
+    lda _dj+DIR::clust+1
+    sta _clst+1
+    jsr _get_fat
+    sta _dj+DIR::clust
+    stx _dj+DIR::clust+1
+
+    cpx #$00                ; fail if invalud
+    bne :+
+    cmp #$02
+:   bcs :+
+
+    lda #FR_DISK_ERR
+    rts
+
+:   lda _dj+DIR::clust      ; check if past end of table
+    cmp _FatFs+FATFS::n_fatent
+    lda _dj+DIR::clust+1
+    sbc _FatFs+FATFS::n_fatent+1
+    bcc :+
+
+    lda #FR_NO_FILE         ; fail if so
+    rts
+
+:   lda _dj+DIR::clust      ; initialize data for new cluster
+    sta _clst
+    lda _dj+DIR::clust+1
+    sta _clst+1
+    jsr _clust2sect
+    lda _clst
+    sta _dj+DIR::sect
+    lda _clst+1
+    sta _dj+DIR::sect+1
+    lda _clst+2
+    sta _dj+DIR::sect+2
+    lda _clst+3
+    sta _dj+DIR::sect+3
+
+@set_and_return:
+    lda _work               ; store the incremented index
+    ldx _work+1
+    sta _dj+DIR::index
+    stx _dj+DIR::index+1
+
+    lda #FR_OK              ; return OK
     rts
 .endproc
 
