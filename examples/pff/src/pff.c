@@ -427,8 +427,13 @@ union Work {
     BYTE cs;
 } work;
 
+#pragma bss-name(push,"ZEROPAGE")
 const unsigned char* dst;
 const unsigned char* src;
+#pragma bss-name (pop)
+#pragma zpsym ("dst")
+#pragma zpsym ("src")
+
 /*-----------------------------------------------------------------------*/
 /* Load multi-byte word in the FAT structure                             */
 /*-----------------------------------------------------------------------*/
@@ -452,8 +457,13 @@ const unsigned char* src;
 static int mem_cmp()
 {
     br = 0;
-    while (work.i-- && (br = *dst++ - *src++) == 0)
-        ;
+    while (work.cs)
+    {
+        --work.cs;
+        br = *dst++ - *src++;
+        if (br != 0)
+        break;
+    }
     return br;
 }
 
@@ -556,7 +566,7 @@ static FRESULT dir_find()
         } /* Reached to end of table */
         dst = buff;
         src = dj.fn;
-        work.i = 11;
+        work.cs = 11;
         if (!(buff[DIR_Attr] & AM_VOL) && !mem_cmp())
             break;        /* Is it a valid entry? */
         result = dir_next(); /* Next entry */
