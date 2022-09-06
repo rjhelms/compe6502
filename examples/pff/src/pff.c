@@ -458,65 +458,6 @@ static int mem_cmp()
 }
 
 /*-----------------------------------------------------------------------*/
-/* FAT access - Read value of a FAT entry                                */
-/*-----------------------------------------------------------------------*/
-
-static CLUST get_fat(           /* 1:IO error, Else:Cluster status */
-)
-{
-#if PF_FS_FAT12
-    UINT wc, bc, ofs;
-#endif
-
-    if (clst.clst < 2 || clst.clst >= FatFs.n_fatent)
-        return 1; /* Range check */
-
-    switch (FatFs.fs_type)
-    {
-#if PF_FS_FAT12
-    case FS_FAT12:
-    {
-        bc = (UINT)clst;
-        bc += bc / 2;
-        ofs = bc % 512;
-        bc /= 512;
-        if (ofs != 511)
-        {
-            if (disk_readp(buf, fs->fatbase + bc, ofs, 2))
-                break;
-        }
-        else
-        {
-            if (disk_readp(buf, fs->fatbase + bc, 511, 1))
-                break;
-            if (disk_readp(buf + 1, fs->fatbase + bc + 1, 0, 1))
-                break;
-        }
-        wc = ld_word(buf);
-        return (clst & 1) ? (wc >> 4) : (wc & 0xFFF);
-    }
-#endif
-#if PF_FS_FAT16
-    case FS_FAT16:
-        sector = FatFs.fatbase + clst.clst / 256;
-        offset = ((UINT)clst.clst % 256) * 2;
-        count = 2;
-        if (disk_readp())
-            break;
-        return ld_word(buff);
-#endif
-#if PF_FS_FAT32
-    case FS_FAT32:
-        if (disk_readp(buf, fs->fatbase + clst / 128, ((UINT)clst % 128) * 4, 4))
-            break;
-        return ld_dword(buf) & 0x0FFFFFFF;
-#endif
-    }
-
-    return 1; /* An error occured at the disk I/O layer */
-}
-
-/*-----------------------------------------------------------------------*/
 /* Directory handling - Rewind directory index                           */
 /*-----------------------------------------------------------------------*/
 

@@ -99,13 +99,16 @@ BS_FilSysType = 54
 .global _br
 .global _clst
 
+
 .global _offset
 .global _count
+.global _sector
 
 .import _disk_readp
 
 .export _check_fs
 .export _clust2sect
+.export _get_fat
 
 .segment "BSS"
     _FatFs: .tag FATFS
@@ -250,7 +253,72 @@ BS_FilSysType = 54
     rts
 .endproc
 
+; unsigned int get_fat()
+; FAT access - Read value of a FAT entry
+;
+; 1:IO error, Else:Cluster status
 
+.proc _get_fat
+    lda _clst+1
+    cmp #$00
+    bne :+
+    lda _clst
+    cmp #$02
+:   jcc @return_error
+    lda _clst
+    cmp _FatFs+FATFS::n_fatent
+    lda _clst+1
+    sbc _FatFs+FATFS::n_fatent+1
+    jcs @return_error
 
+@range_good:
+    lda _FatFs                      ; verify FAT16 partition
+    cmp #$02
+    bne @return_error
 
+    lda _FatFs+FATFS::fatbase       ; sector = fatbase
+    sta _sector
+    lda _FatFs+FATFS::fatbase+1
+    sta _sector+1
+    lda _FatFs+FATFS::fatbase+2
+    sta _sector+2
+    lda _FatFs+FATFS::fatbase+3
+    sta _sector+3
 
+    clc                             ;sector += clst>>8
+    lda _sector
+    adc _clst+1
+    sta _sector
+    lda _sector+1                   ; this could be better
+    adc #$00
+    sta _sector+1                   ; check for carries rather than doing full
+    lda _sector+2                   ; 32 bit add
+    adc #$00
+    sta _sector+2
+    lda _sector+3
+    adc #$00
+    sta _sector+3
+
+    stz _offset+1
+    lda _clst                       ; offset = (clst%256)<<1
+    sta _offset
+    asl _offset
+    rol _offset+1
+
+    lda #$02                        ; count = 2
+    sta _count
+    lda #$00
+    sta _count+1
+
+    jsr _disk_readp                 ; read
+    bne @return_error               ; return error if read error
+
+    lda _buff                       ; else return bytes read
+    ldx _buff+1
+    rts
+
+@return_error:
+    lda #$01
+    ldx #$00
+    rts
+.endproc

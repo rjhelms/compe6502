@@ -126,7 +126,8 @@ typedef unsigned long DWORD;  /* 32-bit unsigned integer */
 
     BYTE check_fs();
     void clust2sect();
-    
+    unsigned int get_fat();
+
     /*--------------------------------------------------------------*/
     /* Petit FatFs module application interface                     */
 
