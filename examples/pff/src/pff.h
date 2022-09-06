@@ -96,6 +96,11 @@ typedef unsigned long DWORD;  /* 32-bit unsigned integer */
         char fname[13]; /* File name */
     } FILINFO;
 
+    union CLST {
+        DWORD mclst;
+        CLUST clst;
+        DWORD sect;
+    };
     /* File function return code (FRESULT) */
 
     #define FR_OK 0
@@ -110,6 +115,8 @@ typedef unsigned long DWORD;  /* 32-bit unsigned integer */
 
     #define buff ((unsigned char *)0x0400)
 
+    extern union CLST clst;
+
     extern FATFS FatFs;        /* Pointer to the file system object (logical drive) */
     extern DIR dj;             /* directory object */
     extern UINT btr;           /* counter for bytes to read */
@@ -118,7 +125,8 @@ typedef unsigned long DWORD;  /* 32-bit unsigned integer */
     /* internal functions ported to assembly */
 
     BYTE check_fs();
-
+    void clust2sect();
+    
     /*--------------------------------------------------------------*/
     /* Petit FatFs module application interface                     */
 

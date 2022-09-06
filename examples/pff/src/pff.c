@@ -420,12 +420,6 @@
 
 ---------------------------------------------------------------------------*/
 
-union Clst {
-    DWORD mclst;
-    CLUST clst;
-    DWORD sect;
-} clst;
-
 union Work {
     DWORD remain;
     DWORD fsize;
@@ -523,22 +517,8 @@ static CLUST get_fat(           /* 1:IO error, Else:Cluster status */
 }
 
 /*-----------------------------------------------------------------------*/
-/* Get sector# from cluster# / Get cluster field from directory entry    */
+/* Get cluster field from directory entry                                */
 /*-----------------------------------------------------------------------*/
-
-void clust2sect(           /* !=0: Sector number, 0: Failed - invalid cluster# */
-)
-{
-
-    clst.clst -= 2;
-    if (clst.clst >= (FatFs.n_fatent - 2))
-    {
-        clst.sect = 0; /* Invalid cluster# */
-        return;
-    }
-    clst.sect = clst.clst * FatFs.csize + FatFs.database;
-    return;
-}
 
 static CLUST get_clust(
     BYTE *dir /* Pointer to directory entry */

@@ -33,7 +33,7 @@
 .macpack longbranch
 
 
-; structs
+; structs & unions
 
 .struct FATFS
     fs_type     .byte
@@ -41,7 +41,7 @@
     csize       .byte
     pad1        .byte
     n_rootdir   .word
-    n_fatend    .word
+    n_fatent    .word
     fatbase     .dword
     dirbase     .dword
     database    .dword
@@ -59,6 +59,12 @@
     clust       .word
     sect        .dword
 .endstruct
+
+.union CLST
+    mclst       .dword
+    clst        .word
+    sect        .dword
+.endunion
 
 ; constants
 
@@ -91,18 +97,23 @@ BS_FilSysType = 54
 .global _dj
 .global _btr
 .global _br
+.global _clst
+
 .global _offset
 .global _count
 
 .import _disk_readp
 
 .export _check_fs
+.export _clust2sect
 
 .segment "BSS"
     _FatFs: .tag FATFS
     _dj: .tag DIR
     _btr: .res 2, $00
     _br: .res 2, $00
+    _clst: .tag CLST
+    _add_tmp: .res 4, $00
 
 .segment "CODE"
 
@@ -166,3 +177,80 @@ BS_FilSysType = 54
     lda #$01            ; else, valid non-FAT boot sector
     rts
 .endproc
+
+; void clust2sect()
+; Get sector# from cluster#
+;
+; returns result in clst.sect
+;
+; 0 - failed, invalid cluster#
+; >1 - sector number
+
+.proc _clust2sect
+    ; clst < n_fatent
+    lda _clst+1                     ; compate clst w/ # fat entries
+    cmp _FatFs+FATFS::n_fatent+1    ; high byte first
+    bcc @clst_good
+    lda _clst
+    cmp _FatFs+FATFS::n_fatent
+    bcc @clst_good
+
+    stz _clst
+    stz _clst+1
+    stz _clst+2
+    stz _clst+3
+
+@clst_good:
+    lda _clst                       ; clst = clst-2
+    sec
+    sbc #$02
+    sta _clst
+    bcs :+
+    dec _clst+1
+
+    lda _clst                       ; stash clst in temp var for multiplication
+    sta _add_tmp
+    lda _clst+1
+    sta _add_tmp+1
+
+    stz _clst                       ; zero clst
+    stz _clst+1
+    stz _clst+2
+    stz _clst+3
+
+    ldy _FatFs+FATFS::csize         ; multiple by csize
+
+@add_csize_loop:
+    clc                             ; loop of 16 bit adds with carry
+    lda _clst
+    adc _add_tmp
+    sta _clst
+    lda _clst+1
+    adc _add_tmp+1
+    sta _clst+1
+    bcc :+
+    inc _clst+2
+:   dey
+    bne @add_csize_loop
+
+    clc                             ; add FatFs.database - 32 bit add
+    lda _clst
+    adc _FatFs+FATFS::database
+    sta _clst
+    lda _clst+1
+    adc _FatFs+FATFS::database+1
+    sta _clst+1
+    lda _clst+2
+    adc _FatFs+FATFS::database+2
+    sta _clst+2
+    lda _clst+3
+    adc _FatFs+FATFS::database+3
+    sta _clst+3
+
+    rts
+.endproc
+
+
+
+
+
