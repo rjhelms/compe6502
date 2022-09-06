@@ -517,26 +517,6 @@ static CLUST get_fat(           /* 1:IO error, Else:Cluster status */
 }
 
 /*-----------------------------------------------------------------------*/
-/* Get cluster field from directory entry                                */
-/*-----------------------------------------------------------------------*/
-
-static CLUST get_clust(
-    BYTE *dir /* Pointer to directory entry */
-)
-{
-    CLUST clst = 0;
-#if PF_FS_FAT32
-    FATFS *fs = FatFs;
-    if (_FS_32ONLY || fs->fs_type == FS_FAT32)
-    {
-        clst = ld_word(dir + DIR_FstClusHI);
-        clst <<= 16;
-    }
-#endif
-    return clst + ld_word(dir + DIR_FstClusLO);
-}
-
-/*-----------------------------------------------------------------------*/
 /* Directory handling - Rewind directory index                           */
 /*-----------------------------------------------------------------------*/
 
@@ -936,7 +916,7 @@ FRESULT pf_open(
     if (!buff[0] || (buff[DIR_Attr] & AM_DIR))
         return FR_NO_FILE; /* It is a directory */
 
-    FatFs.org_clust = get_clust(buff);           /* File start cluster */
+    FatFs.org_clust = ld_word(buff + DIR_FstClusLO);           /* File start cluster */
     FatFs.fsize = ld_dword(buff + DIR_FileSize); /* File size */
     FatFs.fptr = 0;                              /* File pointer */
     FatFs.flag = FA_OPENED;
