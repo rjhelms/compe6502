@@ -136,6 +136,7 @@ typedef unsigned long DWORD;  /* 32-bit unsigned integer */
     unsigned char mem_cmp();
     FRESULT dir_rewind();
     FRESULT dir_next();
+    FRESULT dir_find();
 
     /*--------------------------------------------------------------*/
     /* Petit FatFs module application interface                     */

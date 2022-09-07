@@ -102,6 +102,8 @@ AM_MASK = $3F   ; mask of defined bits
 
 ; boot sector offsets
 BS_FilSysType = 54
+; directory entry offsets
+DIR_Attr = 11
 
 .global _FatFs
 .global _dj
@@ -115,12 +117,14 @@ BS_FilSysType = 54
 .global _offset
 .global _count
 .global _sector
+.global _result
 
 .import _disk_readp
 .import _work
 
 .export _check_fs
 .export _clust2sect
+.export _dir_find
 .export _dir_rewind
 .export _dir_next
 .export _get_fat
@@ -273,7 +277,85 @@ BS_FilSysType = 54
     rts
 .endproc
 
-; unsinged char dir_next
+; unsigned char dir_find()
+; find an object in the directory
+
+.proc _dir_find
+    jsr _dir_rewind
+    sta _result
+    beq @loop
+    rts     ; if result is anything other than FR_OK, return
+
+@loop:
+    lda _dj+DIR::sect
+    sta _sector
+    lda _dj+DIR::sect+1
+    sta _sector+1
+    lda _dj+DIR::sect+2
+    sta _sector+2
+    lda _dj+DIR::sect+3
+    sta _sector+3
+
+    lda _dj+DIR::index  ; offset = dj.index % 16
+    and #$0F
+    sta _offset
+    stz _offset+1
+
+    asl _offset         ; offset <<= 5
+    rol _offset+1
+    asl _offset
+    rol _offset+1
+    asl _offset
+    rol _offset+1
+    asl _offset
+    rol _offset+1
+    asl _offset
+    rol _offset+1
+
+    stz _count+1
+    lda #$20
+    sta _count
+
+    jsr _disk_readp     ; read an entry
+    beq :+
+    lda #FR_DISK_ERR    ; if there's an error, return it
+    sta _result
+    rts
+
+:   lda _buff           ; if buff[0] is null, return no file
+    bne :+
+
+    lda #FR_NO_FILE
+    sta _result
+    rts
+
+:   lda #<_buff
+    sta _dst
+    lda #>_buff
+    sta _dst+1
+    lda #<(_dj+DIR::fn)
+    sta _src
+    lda #>(_dj+DIR::fn+1)
+    sta _src+1
+    lda #$08
+    sta _work
+
+    lda _buff+DIR_Attr  ; if not a volume entry
+    and #AM_VOL
+    bne :+
+    jsr _mem_cmp        ; and the file we're looking for
+    beq @return         ; return
+
+:   jsr _dir_next       ; get next entry
+    sta _result         ; keep going, provided no error
+    jeq @loop
+
+@return:
+    lda _result
+    rts
+.endproc
+
+; unsigned char dir_next()
 ; move directory index next
 ;
 ; FR_OK - succeeded, FR_NO_FILE - end of table

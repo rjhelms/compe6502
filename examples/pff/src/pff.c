@@ -435,42 +435,6 @@ union Work {
 #define ld_dword(ptr) (*(DWORD *)(ptr)) // cast a pointer to a dword
 
 /*-----------------------------------------------------------------------*/
-/* Directory handling - Find an object in the directory                  */
-/*-----------------------------------------------------------------------*/
-
-static FRESULT dir_find()
-{
-    result = dir_rewind(); /* Rewind directory object */
-    if (result != FR_OK)
-        return result;
-
-    do
-    {
-        sector = dj.sect;
-        offset = (dj.index % 16) * 32;
-        count = 32;
-        result = disk_readp() /* Read an entry */
-                  ? FR_DISK_ERR
-                  : FR_OK;
-        if (result != FR_OK)
-            break;
-        if (buff[DIR_Name] == 0) /* First character */
-        {
-            result = FR_NO_FILE;
-            break;
-        } /* Reached to end of table */
-        dst = buff;
-        src = dj.fn;
-        work.cs = 11;
-        if (!(buff[DIR_Attr] & AM_VOL) && !mem_cmp())
-            break;        /* Is it a valid entry? */
-        result = dir_next(); /* Next entry */
-    } while (result == FR_OK);
-
-    return result;
-}
-
-/*-----------------------------------------------------------------------*/
 /* Read an object from the directory                                     */
 /*-----------------------------------------------------------------------*/
 #if PF_USE_DIR
