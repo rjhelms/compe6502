@@ -218,9 +218,9 @@ STA_NODISK  = $02   ; disk no present
     stz _work+3
 
     ; work = clst * buff+BPB_NumFATs-13
-    ldy _buff+BPB_NumFATs-13
-:   clc
-    lda _work
+    ldy _buff+BPB_NumFATs-13    ; this is multiplying to determine the size of
+:   clc                         ; the FAT(s) on disk - are there ever going to
+    lda _work                   ; be more (or fewer) than 2?
     adc _clst
     sta _work
     lda _work+1
@@ -522,10 +522,10 @@ STA_NODISK  = $02   ; disk no present
 
     lda _btr+1      ; if btr>=work btr=work
     cmp _work+1
-    bcc @check_read ; if high bit is smaller, keep going
+    bcc @check_read ; if high byte is smaller, keep going
     beq :+
-    bcs @truncate   ; if high bit is larger, need to truncate
-:   lda _btr        ; otherwise check low bit
+    bcs @truncate   ; if high byte is larger, need to truncate
+:   lda _btr        ; otherwise check low byte
     cmp _work
     bcc @check_read
 @truncate:
