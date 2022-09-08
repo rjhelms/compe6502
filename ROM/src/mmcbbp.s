@@ -1,42 +1,12 @@
 .PC02
 
-.macro print_a
-    pha
-    pha
-    lda #$D0
-    sta $B801
-    pla
-    sta $B801
-    lda #$D6
-    sta $B801
-    pla
-.endmacro
-
-.macro print addr
-    lda #$D0
-    sta $B801
-    lda addr
-    sta $B801
-    lda #$D6
-    sta $B801
-.endmacro
-
-.macro print_zpy addr
-    lda #$D0
-    sta $B801
-    lda (addr),y
-    sta $B801
-    lda #$D6
-    sta $B801
-.endmacro
-
 ; IO definitions
-IO_VIA_PORTB    = $8000
-IO_VIA_DDRB     = $8002
-SD_MISO         = %00000001
-SD_MOSI         = %00000010
-SD_SCK          = %00000100
-SD_CS           = %00001000
+.import IO_VIA_PORTB
+.import IO_VIA_DDRB
+.importzp IO_MASK_SD_MISO
+.importzp IO_MASK_SD_MOSI
+.importzp IO_MASK_SD_SCK
+.importzp IO_MASK_SD_CS
 
 ; Command definitions
 CMD0    = ($40 + 0)     ; GO_IDLE_STATE
@@ -66,8 +36,6 @@ RES_ERROR   = 1     ; 1: Disk error
 RES_NOTRDY  = 2     ; 2: Not ready
 RES_PARERR  = 3     ; 3: Invalid parameter
 
-_buff       = $0400             ; SD buffer location
-
 .macpack longbranch
 
 .global _sector
@@ -81,7 +49,7 @@ _buff       = $0400             ; SD buffer location
 .segment "ZEROPAGE"
     __buff: .res 2
 
-.segment "BSS"
+.segment "SD_BSS"
     _sector: .res 4, $00
     _offset: .res 2, $00
     _count: .res 2, $00
@@ -94,7 +62,11 @@ _buff       = $0400             ; SD buffer location
     _data_byte: .res 1, $00
     _tmr: .res 2, $00
 
-.segment "CODE"
+.segment "SD_WORK"
+
+.export LOAD_PAGE               = $0400
+
+.segment "SYS"
 
 ; unsigned char disk_initialize();
 ; initialize disk drive
@@ -102,7 +74,7 @@ _buff       = $0400             ; SD buffer location
 .proc _disk_initialize
     jsr _init_port      ; init port and send 10 dummy bytes
     lda IO_VIA_PORTB
-    ora #SD_CS
+    ora #IO_MASK_SD_CS
     sta IO_VIA_PORTB
     lda #$00
     sta _tmr+1
@@ -150,16 +122,16 @@ _buff       = $0400             ; SD buffer location
     ldx #$00            ; write 4 byte response to buffer
 :   jsr _rcvr_mmc
     lda _data_byte
-    sta _buff, x
+    sta LOAD_PAGE, x
     inx
     cpx #$04
     bne :-
 
-    lda _buff+2
+    lda LOAD_PAGE+2
     cmp #$01            ; expecting $01 in buff[2]
     jne @return         ; so fail if otherwise
 
-    lda _buff+3
+    lda LOAD_PAGE+3
     cmp #$AA            ; and same for $AA in buff[3]
     jne @return
 
@@ -218,12 +190,12 @@ _buff       = $0400             ; SD buffer location
     ldx #$00            ; write 4 byte response to buffer
 :   jsr _rcvr_mmc
     lda _data_byte
-    sta _buff, x
+    sta LOAD_PAGE, x
     inx
     cpx #$04
     bne :-
 
-    lda _buff           ; check if bit 6 is set of response
+    lda LOAD_PAGE           ; check if bit 6 is set of response
     and #$40
     beq :+              ; if so, is a block device
     lda #(CT_SD2|CT_BLOCK)
@@ -249,9 +221,9 @@ _buff       = $0400             ; SD buffer location
 ; read partial sector
 
 .proc _disk_readp
-    lda #<_buff     ; set __buff (write buffer) to bottom of _buff
+    lda #<LOAD_PAGE     ; set __buff (write buffer) to bottom of LOAD_PAGE
     sta __buff      ; these names are bad
-    lda #>_buff
+    lda #>LOAD_PAGE
     sta __buff+1
 
     lda _CardType
@@ -404,11 +376,11 @@ _buff       = $0400             ; SD buffer location
 
 .proc _init_port
     lda IO_VIA_PORTB
-    ora #(SD_MOSI | SD_SCK | SD_CS)
+    ora #(IO_MASK_SD_MOSI | IO_MASK_SD_SCK | IO_MASK_SD_CS)
     sta IO_VIA_PORTB
     lda IO_VIA_DDRB
-    ora #(SD_MOSI | SD_SCK | SD_CS)
-    and #<~SD_MISO
+    ora #(IO_MASK_SD_MOSI | IO_MASK_SD_SCK | IO_MASK_SD_CS)
+    and #<~IO_MASK_SD_MISO
     sta IO_VIA_DDRB
     rts
 .endproc
@@ -418,7 +390,7 @@ _buff       = $0400             ; SD buffer location
 
 .proc _rcvr_mmc
     lda IO_VIA_PORTB    ; set data bit high
-    ora #SD_MOSI
+    ora #IO_MASK_SD_MOSI
     sta IO_VIA_PORTB
     stz _data_byte;
     
@@ -426,15 +398,15 @@ _buff       = $0400             ; SD buffer location
 @loop:
     asl _data_byte  ; shift data left
     lda IO_VIA_PORTB
-    and #SD_MISO
+    and #IO_MASK_SD_MISO
     beq @clock
     inc _data_byte
 
 @clock:
     lda IO_VIA_PORTB
-    ora #SD_SCK ; pulse clock
+    ora #IO_MASK_SD_SCK ; pulse clock
     sta IO_VIA_PORTB
-    and #<~SD_SCK
+    and #<~IO_MASK_SD_SCK
     sta IO_VIA_PORTB
     dey
     bne @loop
@@ -447,7 +419,7 @@ _buff       = $0400             ; SD buffer location
 
 .proc _release_spi
     lda IO_VIA_PORTB
-    ora #SD_CS      ; release chip select
+    ora #IO_MASK_SD_CS      ; release chip select
     sta IO_VIA_PORTB
     jmp _rcvr_mmc    ; return through rcvr_mmc
 .endproc
@@ -502,12 +474,12 @@ _buff       = $0400             ; SD buffer location
 
 @enable_card:
     lda IO_VIA_PORTB   ; send dummy byte with CS high
-    ora #SD_CS
+    ora #IO_MASK_SD_CS
     sta IO_VIA_PORTB
     jsr _rcvr_mmc
 
     lda IO_VIA_PORTB   ; send dummy byte with CS low
-    and #<~SD_CS
+    and #<~IO_MASK_SD_CS
     sta IO_VIA_PORTB
     jsr _rcvr_mmc
 
@@ -570,7 +542,7 @@ _buff       = $0400             ; SD buffer location
 
 .proc _skip_mmc
     lda IO_VIA_PORTB    ; set data bit high
-    ora #SD_MOSI
+    ora #IO_MASK_SD_MOSI
     sta IO_VIA_PORTB
 
 @loop1:
@@ -578,9 +550,9 @@ _buff       = $0400             ; SD buffer location
     lda IO_VIA_PORTB
 
 @loop2:
-    ora #SD_SCK ; pulse clock
+    ora #IO_MASK_SD_SCK ; pulse clock
     sta IO_VIA_PORTB
-    and #<~SD_SCK
+    and #<~IO_MASK_SD_SCK
     sta IO_VIA_PORTB
     dex
     bne @loop2
@@ -605,17 +577,17 @@ _buff       = $0400             ; SD buffer location
     lda IO_VIA_PORTB
     
 @loop:
-    and #<~SD_MOSI  ; set MISO low
+    and #<~IO_MASK_SD_MOSI  ; set MISO low
     asl _data_byte  ; shift data byte left
                     ; top bit is now in carry
     bcc @out
-    ora #SD_MOSI    ; set MISO high if carry set
+    ora #IO_MASK_SD_MOSI    ; set MISO high if carry set
 
 @out:
     sta IO_VIA_PORTB    ; write data bit
-    ora #SD_SCK         ; pulse clock
+    ora #IO_MASK_SD_SCK         ; pulse clock
     sta IO_VIA_PORTB
-    and #<~SD_SCK
+    and #<~IO_MASK_SD_SCK
     sta IO_VIA_PORTB
 
     dex

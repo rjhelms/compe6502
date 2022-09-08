@@ -47,10 +47,6 @@ CSPEED_DEFAULT = $A3    ; 600bps delay
 
 CSPEED: .res 1
 
-.segment "SD_WORK"
-
-.export LOAD_PAGE               = $0400
-
 .segment "SYS"
 
 .export IO_INIT, TIMER_INIT, KEY_GET, KEY_READ, BEEP, CLOAD, CSAVE, CPUTBYTE
@@ -59,6 +55,7 @@ CSPEED: .res 1
 .import SHWMSG, PRBYTE
 .import COUT
 .import IRQRET0, CLOCK_TICKS
+.import LOAD_PAGE
 
 .proc IO_INIT
         pha
