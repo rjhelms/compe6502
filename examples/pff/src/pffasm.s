@@ -1,5 +1,10 @@
 .PC02
 
+.macro shift_left_16 addr
+    asl addr
+    rol addr+1
+.endmacro
+
 .macro print_a
     pha
     pha
@@ -102,8 +107,11 @@ AM_MASK = $3F   ; mask of defined bits
 
 ; boot sector offsets
 BS_FilSysType = 54
+
 ; directory entry offsets
 DIR_Attr = 11
+DIR_FstClusLO = 26
+DIR_FileSize = 28
 
 .global _FatFs
 .global _dj
@@ -121,6 +129,8 @@ DIR_Attr = 11
 
 .import _disk_readp
 .import _work
+
+.export _pf_open
 
 .export _check_fs
 .export _clust2sect
@@ -143,6 +153,57 @@ DIR_Attr = 11
     _add_tmp: .res 4, $00
 
 .segment "CODE"
+
+; unsigned char pf_open()
+; open a file
+
+.proc _pf_open
+    lda _FatFs+FATFS::fs_type   ; check file system loaded
+    bne :+
+    lda #FR_NOT_ENABLED
+    rts
+
+:   stz _FatFs+FATFS::flag      ; zero out status flag
+    jsr _dir_find               ; follow the file path
+    sta _result
+    beq :+                      ; if result >0, return error
+    rts
+
+:   lda _buff
+    beq @file_is_dir
+    lda _buff+DIR_Attr
+    and AM_DIR
+    beq @file_ok
+
+@file_is_dir:
+    lda #FR_NO_FILE
+    rts
+
+@file_ok:
+    lda _buff+DIR_FstClusLO     ; start cluster
+    sta _FatFs+FATFS::org_clust
+    lda _buff+DIR_FstClusLO+1
+    sta _FatFs+FATFS::org_clust+1
+
+    lda _buff+DIR_FileSize      ; file size
+    sta _FatFs+FATFS::fsize
+    lda _buff+DIR_FileSize+1
+    sta _FatFs+FATFS::fsize+1
+    lda _buff+DIR_FileSize+2
+    sta _FatFs+FATFS::fsize+2
+    lda _buff+DIR_FileSize+3
+    sta _FatFs+FATFS::fsize+3
+
+    stz _FatFs+FATFS::fptr      ; file pointer (to start of file)
+    stz _FatFs+FATFS::fptr+1
+    stz _FatFs+FATFS::fptr+2
+    stz _FatFs+FATFS::fptr+3
+
+    lda #FA_OPENED
+    sta _FatFs+FATFS::flag
+    lda #FR_OK
+    rts
+.endproc
 
 ; unsigned char check_fs()
 ; Check a sector if it is an FAT boot record
@@ -301,16 +362,11 @@ DIR_Attr = 11
     sta _offset
     stz _offset+1
 
-    asl _offset         ; offset <<= 5
-    rol _offset+1
-    asl _offset
-    rol _offset+1
-    asl _offset
-    rol _offset+1
-    asl _offset
-    rol _offset+1
-    asl _offset
-    rol _offset+1
+    shift_left_16 _offset
+    shift_left_16 _offset
+    shift_left_16 _offset
+    shift_left_16 _offset
+    shift_left_16 _offset
 
     stz _count+1
     lda #$20
@@ -588,8 +644,7 @@ DIR_Attr = 11
     stz _offset+1
     lda _clst                       ; offset = (clst%256)<<1
     sta _offset
-    asl _offset
-    rol _offset+1
+    shift_left_16 _offset
 
     lda #$02                        ; count = 2
     sta _count

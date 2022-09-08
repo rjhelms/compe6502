@@ -669,9 +669,8 @@ FRESULT pf_mount(
     if (!clst.mclst)
         clst.mclst = ld_dword(buff + BPB_TotSec32 - 13);
     clst.mclst = (clst.mclst /* Last cluster# + 1 */
-             - ld_word(buff + BPB_RsvdSecCnt - 13) - work.fsize - FatFs.n_rootdir / 16) /
-                FatFs.csize +
-            2;
+             - ld_word(buff + BPB_RsvdSecCnt - 13) - work.fsize - FatFs.n_rootdir / 16) 
+             / FatFs.csize + 2;
     FatFs.n_fatent = (CLUST)clst.mclst;
 
     FatFs.fs_type = 0; /* Determine the FAT sub type */
@@ -705,31 +704,6 @@ FRESULT pf_mount(
     FatFs.database = FatFs.fatbase + work.fsize + FatFs.n_rootdir / 16; /* Data start sector (lba) */
 
     FatFs.flag = 0;
-
-    return FR_OK;
-}
-
-/*-----------------------------------------------------------------------*/
-/* Open or Create a File                                                 */
-/*-----------------------------------------------------------------------*/
-
-FRESULT pf_open(
-)
-{
-    if (!FatFs.fs_type)
-        return FR_NOT_ENABLED; /* Check file system */
-
-    FatFs.flag = 0;
-    result = dir_find(); /* Follow the file path */
-    if (result != FR_OK)
-        return result; /* Follow failed */
-    if (!buff[0] || (buff[DIR_Attr] & AM_DIR))
-        return FR_NO_FILE; /* It is a directory */
-
-    FatFs.org_clust = ld_word(buff + DIR_FstClusLO);           /* File start cluster */
-    FatFs.fsize = ld_dword(buff + DIR_FileSize); /* File size */
-    FatFs.fptr = 0;                              /* File pointer */
-    FatFs.flag = FA_OPENED;
 
     return FR_OK;
 }
