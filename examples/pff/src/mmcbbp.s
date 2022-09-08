@@ -70,13 +70,6 @@ _buff       = $0400             ; SD buffer location
 
 .macpack longbranch
 
-; .global _tmr
-; .global _data_byte
-; .global _cmd, _arg, _tmp_cmd, _tmp_arg
-; .global _CardType, _result
-; .global _tmr
-
-.global __buff
 .global _sector
 .global _offset
 .global _count
@@ -84,13 +77,6 @@ _buff       = $0400             ; SD buffer location
 
 .export _disk_initialize
 .export _disk_readp
-; .export _dly_us
-; .export _init_port
-; .export _release_spi
-; .export _rcvr_mmc
-; .export _send_cmd
-; .export _skip_mmc
-; .export _xmit_mmc
 
 .segment "ZEROPAGE"
     __buff: .res 2

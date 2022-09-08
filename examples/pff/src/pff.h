@@ -96,12 +96,6 @@ typedef unsigned long DWORD;  /* 32-bit unsigned integer */
         char fname[13]; /* File name */
     } FILINFO;
 
-    union CLST {
-        DWORD mclst;
-        CLUST clst;
-        DWORD sect;
-    };
-
     /* File function return code (FRESULT) */
 
     #define FR_OK 0
@@ -127,16 +121,6 @@ typedef unsigned long DWORD;  /* 32-bit unsigned integer */
     extern const unsigned char* src;
     #pragma zpsym ("dst")
     #pragma zpsym ("src")
-
-    /* internal functions ported to assembly */
-
-    BYTE check_fs();
-    void clust2sect();
-    unsigned int get_fat();
-    unsigned char mem_cmp();
-    FRESULT dir_rewind();
-    FRESULT dir_next();
-    FRESULT dir_find();
 
     /*--------------------------------------------------------------*/
     /* Petit FatFs module application interface                     */

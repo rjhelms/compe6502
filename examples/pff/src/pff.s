@@ -12,38 +12,7 @@
     ror addr
 .endmacro
 
-.macro print_a
-    pha
-    pha
-    lda #$D0
-    sta $B801
-    pla
-    sta $B801
-    lda #$D6
-    sta $B801
-    pla
-.endmacro
-
-.macro print addr
-    lda #$D0
-    sta $B801
-    lda addr
-    sta $B801
-    lda #$D6
-    sta $B801
-.endmacro
-
-.macro print_zpy addr
-    lda #$D0
-    sta $B801
-    lda (addr),y
-    sta $B801
-    lda #$D6
-    sta $B801
-.endmacro
-
 .macpack longbranch
-
 
 ; structs & unions
 
@@ -71,12 +40,6 @@
     clust       .word
     sect        .dword
 .endstruct
-
-.union CLST
-    mclst       .dword
-    clst        .word
-    sect        .dword
-.endunion
 
 ; constants
 
@@ -135,9 +98,7 @@ STA_NODISK  = $02   ; disk no present
 
 .global _FatFs
 .global _dj
-.global _btr
 .global _br
-.global _clst
 
 .globalzp _dst
 .globalzp _src
@@ -149,18 +110,10 @@ STA_NODISK  = $02   ; disk no present
 
 .import _disk_initialize
 .import _disk_readp
-.import _work
 
 .export _pf_mount
 .export _pf_open
-
-.export _check_fs
-.export _clust2sect
-.export _dir_find
-.export _dir_rewind
-.export _dir_next
-.export _get_fat
-.export _mem_cmp
+.export _pf_read
 
 .segment "ZEROPAGE"
     _dst: .res 2
@@ -171,7 +124,8 @@ STA_NODISK  = $02   ; disk no present
     _dj: .tag DIR
     _btr: .res 2, $00
     _br: .res 2, $00
-    _clst: .tag CLST
+    _clst: .res 4, $00
+    _work: .res 4, $00
     _add_tmp: .res 4, $00
     _rootdir16: .res 2, $00
 
@@ -524,6 +478,182 @@ STA_NODISK  = $02   ; disk no present
 
     lda #FA_OPENED
     sta _FatFs+FATFS::flag
+    lda #FR_OK
+    rts
+.endproc
+
+; unsigned char pf_read()
+; read a sector from file
+
+.proc _pf_read
+    lda #$02
+    sta _btr+1
+    stz _btr
+    stz _br
+    stz _br+1
+
+    lda _FatFs+FATFS::fs_type
+    bne :+
+    lda #FR_NOT_ENABLED
+    rts
+
+:   lda _FatFs+FATFS::flag
+    and #FA_OPENED
+    bne :+
+    lda #FR_NOT_OPENED
+    rts
+
+            ; calculate remaining bytes
+:   sec     ; FatFs.fsize - FatFs.fptr
+    lda _FatFs+FATFS::fsize
+    sbc _FatFs+FATFS::fptr
+    sta _work
+    lda _FatFs+FATFS::fsize+1
+    sbc _FatFs+FATFS::fptr+1
+    sta _work+1
+    lda _FatFs+FATFS::fsize+2
+    sbc _FatFs+FATFS::fptr+2
+    sta _work+2
+    lda _FatFs+FATFS::fsize+3
+    sbc _FatFs+FATFS::fptr+3
+    ora _work+2         ; if bytes 3 or 4 > 0, guaranteed no need to truncate
+    bne @check_read
+
+
+    lda _btr+1      ; if btr>=work btr=work
+    cmp _work+1
+    bcc @check_read ; if high bit is smaller, keep going
+    beq :+
+    bcs @truncate   ; if high bit is larger, need to truncate
+:   lda _btr        ; otherwise check low bit
+    cmp _work
+    bcc @check_read
+@truncate:
+    lda _work+1
+    sta _btr+1
+    lda _work
+    sta _btr
+
+@check_read:
+    lda _btr        ; is there anything to read?
+    ora _btr+1
+    bne :+
+    lda #FR_OK      ; return early if not
+    rts
+
+:   lda _FatFs+FATFS::csize
+    dec
+    sta _work+1
+    lda _FatFs+FATFS::fptr+1
+    sta _work+2
+    lda _FatFs+FATFS::fptr+2
+    sta _work+3
+    lsr _work+3
+    ror _work+2
+    
+    lda _work+2
+    and _work+1
+    sta _work   ; sector offset in the cluster
+    bne @get_sect
+
+    lda _FatFs+FATFS::fptr     ; at top of file
+    ora _FatFs+FATFS::fptr+1
+    ora _FatFs+FATFS::fptr+2
+    ora _FatFs+FATFS::fptr+3
+    bne :+
+    lda _FatFs+FATFS::org_clust
+    sta _FatFs+FATFS::curr_clust
+    lda _FatFs+FATFS::org_clust+1
+    sta _FatFs+FATFS::curr_clust+1
+    jmp @check_clust
+
+:   lda _FatFs+FATFS::curr_clust
+    sta _clst
+    lda _FatFs+FATFS::curr_clust+1
+    sta _clst+1
+    jsr _get_fat
+    sta _FatFs+FATFS::curr_clust
+    stx _FatFs+FATFS::curr_clust+1
+
+@check_clust:
+    lda _FatFs+FATFS::curr_clust+1
+    bne @get_sect
+    lda _FatFs+FATFS::curr_clust
+    cmp #$02
+    bcs @get_sect
+
+    stz _FatFs+FATFS::flag  ; close file and return error
+    lda #FR_DISK_ERR        ; if cluster is 0 or 1
+    rts
+
+@get_sect:                  ; get current sector
+    lda _FatFs+FATFS::curr_clust
+    sta _clst
+    lda _FatFs+FATFS::curr_clust+1
+    sta _clst+1
+    jsr _clust2sect
+
+    lda _clst
+    sta _FatFs+FATFS::dsect
+    lda _clst+1
+    sta _FatFs+FATFS::dsect+1
+    lda _clst+2
+    sta _FatFs+FATFS::dsect+2
+    lda _clst+3
+    sta _FatFs+FATFS::dsect+3
+
+    ora _FatFs+FATFS::dsect
+    ora _FatFs+FATFS::dsect+1
+    ora _FatFs+FATFS::dsect+2
+    bne :+
+
+    stz _FatFs+FATFS::flag  ; close file and return error
+    lda #FR_DISK_ERR        ; if sector is 0
+    rts
+
+:   lda _FatFs+FATFS::dsect
+    sta _sector
+    lda _FatFs+FATFS::dsect+1
+    sta _sector+1
+    lda _FatFs+FATFS::dsect+2
+    sta _sector+2
+    lda _FatFs+FATFS::dsect+3
+    sta _sector+3
+
+    stz _offset
+    stz _offset+1
+
+    lda _btr
+    sta _count
+    lda _btr+1
+    sta _count+1
+    jsr _disk_readp         ; attempt the file read
+    lda _result
+    beq :+
+    stz _FatFs+FATFS::flag  ; close file and return error
+    lda #FR_DISK_ERR        ; if read error
+    rts
+
+:   clc
+    lda _FatFs+FATFS::fptr
+    adc _btr
+    sta _FatFs+FATFS::fptr
+    lda _FatFs+FATFS::fptr+1
+    adc _btr+1
+    sta _FatFs+FATFS::fptr+1
+    lda _FatFs+FATFS::fptr+2
+    adc #$00
+    sta _FatFs+FATFS::fptr+2
+    lda _FatFs+FATFS::fptr+3
+    adc #$00
+    sta _FatFs+FATFS::fptr+3
+
+    lda _btr
+    sta _br
+    lda _btr+1
+    sta _br+1
+
+@done:
     lda #FR_OK
     rts
 .endproc
