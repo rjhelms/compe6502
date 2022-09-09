@@ -11,6 +11,9 @@
 
 ; reserved bytes here
 
+        entrypoint _B_PF_READ, B_PF_READ
+        entrypoint _B_PF_OPEN, B_PF_OPEN
+        entrypoint _B_PF_MOUNT, B_PF_MOUNT
         entrypoint _B_CSAVE, B_CSAVE
         entrypoint _B_CLOAD, B_CLOAD
         entrypoint _B_CPUTBYTE, B_CPUTBYTE

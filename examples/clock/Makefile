@@ -10,6 +10,7 @@ TEMP := tmp
 
 PROJECT = clock
 TARGET = $(BIN)/$(PROJECT).bin
+PRG = $(BIN)/$(PROJECT).prg
 HEXFILE = $(BIN)/$(PROJECT).hex
 WAVE = $(BIN)/$(PROJECT).wav
 
@@ -30,7 +31,10 @@ OBJECTS = $(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(SOURCES))
 .PHONY: all clean
 .SECONDARY: 
 
-all: $(HEXFILE) $(WAVE)
+all: $(PRG)
+
+$(PRG): $(TARGET)
+	cat $(TARGET).hdr $(TARGET) > $(PRG)
 
 $(WAVE): $(TARGET)
 	python ../../util/bin2tape.py $(TARGET) $(START_ADDRESS)

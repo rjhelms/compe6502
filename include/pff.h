@@ -22,12 +22,6 @@ extern "C"
 {
 #endif
 
-#include "pffconf.h"
-
-#if PF_DEFINED != PFCONF_DEF
-#error Wrong configuration file (pffconf.h).
-#endif
-
     /* Integer types used for FatFs API */
 
 #if defined(_WIN32) /* Main development platform */
@@ -108,19 +102,14 @@ typedef unsigned long DWORD;  /* 32-bit unsigned integer */
 
     typedef BYTE FRESULT;
 
+    #define pf_mount B_PF_MOUNT
+    #define pf_open B_PF_OPEN
+    #define pf_read B_PF_READ
+
     #define buff ((unsigned char *)0x0400)
 
-    extern union CLST clst;
-
-    extern FATFS FatFs;        /* Pointer to the file system object (logical drive) */
     extern DIR dj;             /* directory object */
-    extern UINT btr;           /* counter for bytes to read */
     extern UINT br;            /* counter of bytes read */
-
-    extern const unsigned char* dst;
-    extern const unsigned char* src;
-    #pragma zpsym ("dst")
-    #pragma zpsym ("src")
 
     /*--------------------------------------------------------------*/
     /* Petit FatFs module application interface                     */
@@ -128,10 +117,6 @@ typedef unsigned long DWORD;  /* 32-bit unsigned integer */
     FRESULT pf_mount();                /* Mount/Unmount a logical drive */
     FRESULT pf_open(); /* Open a file */
     FRESULT pf_read();                 /* Read data from the open file */
-    // FRESULT pf_write (const void* buff, UINT btw, UINT* bw);	/* Write data to the open file */
-    // FRESULT pf_lseek(DWORD ofs);                   /* Move file pointer of the open file */
-    // FRESULT pf_opendir(DIR *dj, const char *path); /* Open a directory */
-    // FRESULT pf_readdir(DIR *dj, FILINFO *fno);     /* Read a directory item from the open directory */
 
 /*--------------------------------------------------------------*/
 /* Flags and offset address                                     */

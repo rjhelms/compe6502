@@ -59,6 +59,9 @@ M_PRBYTE	    = $FF06
 
 ; reserved bytes here
 
+B_PF_READ       = $FF27
+B_PF_OPEN       = $FF2A
+B_PF_MOUNT      = $FF2D
 B_CSAVE         = $FF30
 B_CLOAD         = $FF33
 B_CPUTBYTE      = $FF36

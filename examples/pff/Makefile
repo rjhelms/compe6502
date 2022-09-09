@@ -10,10 +10,12 @@ TEMP := tmp
 
 PROJECT = pff_test
 TARGET = $(BIN)/$(PROJECT).bin
+PRG = $(BIN)/$(PROJECT).prg
 HEXFILE = $(BIN)/$(PROJECT).hex
 WAVE = $(BIN)/$(PROJECT).wav
 
-CC_FLAGS := -Osir --add-source -Cl
+CC65_INC = ../../include
+CC_FLAGS := -Osir -I $(CC65_INC) --add-source -Cl
 
 START_ADDRESS = 0x5600
 
@@ -36,8 +38,9 @@ CONFIG = ../../lib/compe6502_RAM.cfg
 .SECONDARY: 
 
 all: $(WAVE)
-test:
-	@echo $(C_ASSEMBLY)
+
+$(PRG): $(TARGET)
+	cat $(TARGET).hdr $(TARGET) > $(PRG)
 
 $(WAVE): $(TARGET)
 	python ../../util/bin2tape.py $(TARGET) $(START_ADDRESS)

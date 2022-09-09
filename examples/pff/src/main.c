@@ -6,15 +6,19 @@
 #include <stdlib.h>
 #include <string.h>
 #include <conio.h>
-#include "pff.h"
+#include <pff.h>
 
 #define VIDEO_DATA 0xB801
+#define ld_word(ptr) (*(WORD*)(ptr))    // cast a pointer to a word
+
+unsigned char *load_loc;
+unsigned char *write_loc;
+char error[32];
 
 void die(           /* Stop with dying message */
          FRESULT rc /* FatFs return value */
 )
 {
-    char error[32];
 
     itoa(rc, error, 10);
     cputs("Failed with rc=");
@@ -30,6 +34,7 @@ void die(           /* Stop with dying message */
 
 int main(void)
 {
+    int (*func) ();
     // DIR dir;	 /* Directory object */
     // FILINFO fno; /* File information object */
     UINT i;
@@ -58,9 +63,9 @@ int main(void)
         die(rc);
     }
 
-    cputs("Open an image file.\r\n");
+    cputs("Load a binary.\r\n");
     
-    memcpy(dj.fn, "CASTLE  IMG", 12);
+    memcpy(dj.fn, "CLOCK   PRG", 12);
     rc = pf_open();
     if (rc)
     {
@@ -68,64 +73,40 @@ int main(void)
         return (EXIT_FAILURE);
     }
 
-    *(unsigned char *)VIDEO_DATA = 0xFF; // reset video buffer
+    rc = pf_read();
+    if (rc)
+    {
+        die(rc);
+        return (EXIT_FAILURE);
+    }
+    load_loc = (unsigned char*)ld_word(buff);
+    write_loc = (unsigned char*)ld_word(buff);
+    itoa((unsigned int)load_loc, error, 16);
+    cputs(error);
+    cputs("\r\n");
+    for (i = 2; i < br; i++)    // load first page w/ header
+    {
+        *write_loc = buff[i];
+        write_loc++;
+    }
+
     for (;;)
     {
         rc = pf_read(); /* Read a chunk of file */
         if (rc || !br)
             break;               /* Error or end of file */
-        for (i = 0; i < br; i++) /* Type the data */
-            *(unsigned char *)VIDEO_DATA = buff[i];
+        for (i = 0; i < br; i++) /* load the binary data */
+        {
+            *write_loc = buff[i];
+            write_loc++;
+        }
     }
     if (rc)
     {
         die(rc);
         return (EXIT_FAILURE);
     }
-
-#if PF_USE_WRITE
-    cputs("Open a file to write (write.txt).\r\n");
-    rc = pf_open("WRITE.TXT");
-    if (rc)
-        die(rc);
-
-    cputs("Write a text data. (Hello world!)\r\n");
-    for (;;)
-    {
-        rc = pf_write("Hello world!\r\n", 14, &bw);
-        if (rc || !bw)
-            break;
-    }
-    if (rc)
-        die(rc);
-
-    cputs("Terminate the file write process.\r\n");
-    rc = pf_write(0, 0, &bw);
-    if (rc)
-        die(rc);
-#endif
-
-#if PF_USE_DIR
-    cputs("Open root directory.\r\n");
-    rc = pf_opendir(&dir, "");
-    if (rc)
-        die(rc);
-
-    cputs("Directory listing...\r\n");
-    for (;;)
-    {
-        rc = pf_readdir(&dir, &fno); /* Read a directory item */
-        if (rc || !fno.fname[0])
-            break; /* Error or end of dir */
-        if (fno.fattrib & AM_DIR)
-            cprintf("   <dir>  %s\r\n", fno.fname);
-        else
-            cprintf("%8lu  %s\r\n", fno.fsize, fno.fname);
-    }
-    if (rc)
-        die(rc);
-#endif
-    cgetc();
-    *(unsigned char *)VIDEO_DATA = 0xF0;
+    func = (int (*)())load_loc;
+    func(); // call the load location
     return (EXIT_SUCCESS);
 }
