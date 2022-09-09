@@ -54,9 +54,9 @@ jumptable       B_Reserve09,            RESERVE
 jumptable       B_Reserve10,            RESERVE
 jumptable       B_Reserve11,            RESERVE
 jumptable       B_Reserve12,            RESERVE
-jumptable       B_Reserve13,            RESERVE
-jumptable       B_Reserve14,            RESERVE
-jumptable       B_Reserve15,            RESERVE
+jumptable       B_PF_READ,              _pf_read
+jumptable       B_PF_OPEN,              _pf_open
+jumptable       B_PF_MOUNT,             _pf_mount
 jumptable       B_CSAVE,                CSAVE
 jumptable       B_CLOAD,                CLOAD
 jumptable       B_CPUTBYTE,             CPUTBYTE

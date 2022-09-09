@@ -41,10 +41,6 @@
     sect        .dword
 .endstruct
 
-; constants
-
-_buff = $0400
-
 ; file return results
 
 FR_OK               = $00
@@ -108,6 +104,12 @@ STA_NODISK  = $02   ; disk no present
 .global _sector
 .global _result
 
+
+.import __SD_BSS_RUN__
+.import __SD_BSS_SIZE__
+
+.import LOAD_PAGE
+
 .import _disk_initialize
 .import _disk_readp
 
@@ -119,7 +121,7 @@ STA_NODISK  = $02   ; disk no present
     _dst: .res 2
     _src: .res 2
 
-.segment "BSS"
+.segment "SD_BSS"
     _FatFs: .tag FATFS
     _dj: .tag DIR
     _btr: .res 2, $00
@@ -129,12 +131,13 @@ STA_NODISK  = $02   ; disk no present
     _add_tmp: .res 4, $00
     _rootdir16: .res 2, $00
 
-.segment "CODE"
+.segment "SYS"
 
 ; unsigned char pf_mount()
 ; mount a drive
 
 .proc _pf_mount
+    jsr zerobss
     jsr _disk_initialize
     cmp #STA_NOINIT
     bne :+
@@ -159,6 +162,7 @@ STA_NODISK  = $02   ; disk no present
     sta _offset+1
     lda #$10
     sta _count
+    stz _count+1
     jsr _disk_readp
     beq :+
 
@@ -166,16 +170,16 @@ STA_NODISK  = $02   ; disk no present
     sta _FatFs+FATFS::fs_type
     jmp @check_fs_type
 
-:   lda _buff+4                 ; if byte 4 is set, partition exists
+:   lda LOAD_PAGE+4                 ; if byte 4 is set, partition exists
     beq @check_fs_type
 
-    lda _buff+8                 ; get partition offset in LBA
+    lda LOAD_PAGE+8                 ; get partition offset in LBA
     sta _sector
-    lda _buff+8+1
+    lda LOAD_PAGE+8+1
     sta _sector+1
-    lda _buff+8+2
+    lda LOAD_PAGE+8+2
     sta _sector+2
-    lda _buff+8+3
+    lda LOAD_PAGE+8+3
     sta _sector+3
 
     jsr _check_fs
@@ -205,9 +209,9 @@ STA_NODISK  = $02   ; disk no present
     rts
 
 
-:   lda _buff+BPB_FATSz16-13    ; sectors per FAT(16?)
+:   lda LOAD_PAGE+BPB_FATSz16-13    ; sectors per FAT(16?)
     sta _clst                   ; using clst for as temporary space for mult
-    lda _buff+BPB_FATSz16-13+1
+    lda LOAD_PAGE+BPB_FATSz16-13+1
     sta _clst+1
     stz _clst+2
     stz _clst+3
@@ -218,7 +222,7 @@ STA_NODISK  = $02   ; disk no present
     stz _work+3
 
     ; work = clst * buff+BPB_NumFATs-13
-    ldy _buff+BPB_NumFATs-13    ; this is multiplying to determine the size of
+    ldy LOAD_PAGE+BPB_NumFATs-13    ; this is multiplying to determine the size of
 :   clc                         ; the FAT(s) on disk - are there ever going to
     lda _work                   ; be more (or fewer) than 2?
     adc _clst
@@ -237,10 +241,10 @@ STA_NODISK  = $02   ; disk no present
 
     clc
     lda _sector
-    adc _buff+BPB_RsvdSecCnt-13
+    adc LOAD_PAGE+BPB_RsvdSecCnt-13
     sta _FatFs+FATFS::fatbase
     lda _sector+1
-    adc _buff+BPB_RsvdSecCnt-13+1
+    adc LOAD_PAGE+BPB_RsvdSecCnt-13+1
     sta _FatFs+FATFS::fatbase+1
     lda _sector+2
     adc #$00
@@ -249,17 +253,17 @@ STA_NODISK  = $02   ; disk no present
     adc #$00
     sta _FatFs+FATFS::fatbase+3
 
-    lda _buff+BPB_SecPerClus-13 ; sectors per cluster
+    lda LOAD_PAGE+BPB_SecPerClus-13 ; sectors per cluster
     sta _FatFs+FATFS::csize
 
-    lda _buff+BPB_RootEntCnt-13 ; root directory entries
+    lda LOAD_PAGE+BPB_RootEntCnt-13 ; root directory entries
     sta _FatFs+FATFS::n_rootdir
-    lda _buff+BPB_RootEntCnt-13+1
+    lda LOAD_PAGE+BPB_RootEntCnt-13+1
     sta _FatFs+FATFS::n_rootdir+1
 
-    lda _buff+BPB_TotSec16-13   ; number of sectors on filesystem (16)
+    lda LOAD_PAGE+BPB_TotSec16-13   ; number of sectors on filesystem (16)
     sta _clst
-    lda _buff+BPB_TotSec16-13+1
+    lda LOAD_PAGE+BPB_TotSec16-13+1
     sta _clst+1
     stz _clst+2
     stz _clst+3
@@ -268,21 +272,21 @@ STA_NODISK  = $02   ; disk no present
     ora _clst+1
     bne :+
 
-    lda _buff+BPB_TotSec32-13   ; or number of sectors on filesystem (32)
+    lda LOAD_PAGE+BPB_TotSec32-13   ; or number of sectors on filesystem (32)
     sta _clst
-    lda _buff+BPB_TotSec32-13+1
+    lda LOAD_PAGE+BPB_TotSec32-13+1
     sta _clst+1
-    lda _buff+BPB_TotSec32-13+2
+    lda LOAD_PAGE+BPB_TotSec32-13+2
     sta _clst+2
-    lda _buff+BPB_TotSec32-13+3
+    lda LOAD_PAGE+BPB_TotSec32-13+3
     sta _clst+3
 
 :   sec                         ; -= BPB_RsvdSecCnt
     lda _clst
-    sbc _buff+BPB_RsvdSecCnt-13
+    sbc LOAD_PAGE+BPB_RsvdSecCnt-13
     sta _clst
     lda _clst+1
-    sbc _buff+BPB_RsvdSecCnt-13+1
+    sbc LOAD_PAGE+BPB_RsvdSecCnt-13+1
     sta _clst+1
     lda _clst+2
     sbc #$00
@@ -446,9 +450,9 @@ STA_NODISK  = $02   ; disk no present
     beq :+                      ; if result >0, return error
     rts
 
-:   lda _buff
+:   lda LOAD_PAGE
     beq @file_is_dir
-    lda _buff+DIR_Attr
+    lda LOAD_PAGE+DIR_Attr
     and AM_DIR
     beq @file_ok
 
@@ -457,18 +461,18 @@ STA_NODISK  = $02   ; disk no present
     rts
 
 @file_ok:
-    lda _buff+DIR_FstClusLO     ; start cluster
+    lda LOAD_PAGE+DIR_FstClusLO     ; start cluster
     sta _FatFs+FATFS::org_clust
-    lda _buff+DIR_FstClusLO+1
+    lda LOAD_PAGE+DIR_FstClusLO+1
     sta _FatFs+FATFS::org_clust+1
 
-    lda _buff+DIR_FileSize      ; file size
+    lda LOAD_PAGE+DIR_FileSize      ; file size
     sta _FatFs+FATFS::fsize
-    lda _buff+DIR_FileSize+1
+    lda LOAD_PAGE+DIR_FileSize+1
     sta _FatFs+FATFS::fsize+1
-    lda _buff+DIR_FileSize+2
+    lda LOAD_PAGE+DIR_FileSize+2
     sta _FatFs+FATFS::fsize+2
-    lda _buff+DIR_FileSize+3
+    lda LOAD_PAGE+DIR_FileSize+3
     sta _FatFs+FATFS::fsize+3
 
     stz _FatFs+FATFS::fptr      ; file pointer (to start of file)
@@ -682,10 +686,10 @@ STA_NODISK  = $02   ; disk no present
     lda #$03            ; else return with 3 (error)
     rts
 
-:   lda _buff           ; check for $AA55 in buffer
+:   lda LOAD_PAGE           ; check for $AA55 in buffer
     cmp #$55
     bne @invalid_sig
-    lda _buff+1
+    lda LOAD_PAGE+1
     cmp #$AA
     beq @valid_sig
 
@@ -704,10 +708,10 @@ STA_NODISK  = $02   ; disk no present
     jsr _disk_readp
     bne @not_fat
 
-    lda _buff           ; check for FAT identifier
+    lda LOAD_PAGE           ; check for FAT identifier
     cmp #$46            ; "F"
     bne @not_fat
-    lda _buff+1
+    lda LOAD_PAGE+1
     cmp #$41            ; "A"
     bne @not_fat
 
@@ -831,16 +835,16 @@ STA_NODISK  = $02   ; disk no present
     sta _result
     rts
 
-:   lda _buff           ; if buff[0] is null, return no file
+:   lda LOAD_PAGE           ; if buff[0] is null, return no file
     bne :+
 
     lda #FR_NO_FILE
     sta _result
     rts
 
-:   lda #<_buff
+:   lda #<LOAD_PAGE
     sta _dst
-    lda #>_buff
+    lda #>LOAD_PAGE
     sta _dst+1
     lda #<(_dj+DIR::fn)
     sta _src
@@ -849,7 +853,7 @@ STA_NODISK  = $02   ; disk no present
     lda #$08
     sta _work
 
-    lda _buff+DIR_Attr  ; if not a volume entry
+    lda LOAD_PAGE+DIR_Attr  ; if not a volume entry
     and #AM_VOL
     bne :+
     jsr _mem_cmp        ; and the file we're looking for
@@ -1107,8 +1111,8 @@ STA_NODISK  = $02   ; disk no present
     jsr _disk_readp                 ; read
     bne @return_error               ; return error if read error
 
-    lda _buff                       ; else return bytes read
-    ldx _buff+1
+    lda LOAD_PAGE                       ; else return bytes read
+    ldx LOAD_PAGE+1
     rts
 
 @return_error:
@@ -1136,4 +1140,35 @@ STA_NODISK  = $02   ; disk no present
 
     tya
     rts
+.endproc
+
+; zerobss
+; clear the SD_BSS space
+
+.proc zerobss
+    lda #<__SD_BSS_RUN__
+    sta _dst
+    lda #>__SD_BSS_RUN__
+    sta _dst+1
+    lda #00
+    tay
+
+; clear full pages
+    ldx #>__SD_BSS_SIZE__
+    beq @remaining_page
+:   sta (_dst),y
+    iny
+    bne :-
+    inc _dst+1
+    dex
+    bne :-
+
+@remaining_page:
+    cpy #<__SD_BSS_SIZE__
+    beq :+
+    sta (_dst),y
+    iny
+    bne @remaining_page
+
+:   rts
 .endproc
