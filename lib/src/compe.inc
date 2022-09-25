@@ -1,20 +1,18 @@
 ; zero page addresses
 
-SCREEN_PTR      = $00
-SCROLL_PTR      = $02
-XAML	        = $04
-XAMH	        = $05
-STL	        = $06
-STH	        = $07
-L	        = $08
-H	        = $09
-YSAV	        = $0A
-MODE	        = $0B
-MSGL	        = $0C
-MSGH	        = $0D
-COUNTER	        = $0E
-CRC	        = $0F
-CRCCHECK	= $10
+XAML        = $02
+XAMH        = $03
+STL         = $04
+STH         = $05
+L           = $06
+H           = $07
+YSAV        = $08
+MODE        = $09
+MSGL        = $0A
+MSGH        = $0B
+COUNTER     = $0C
+CRC         = $0D
+CRCCHECK    = $0E
 
 SLOT_START = $8000
 SLOT_SIZE  = $0800
